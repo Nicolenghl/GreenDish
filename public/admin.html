@@ -1,0 +1,1718 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GreenDish - Admin</title>
+    <script src="https://cdn.jsdelivr.net/npm/ethers@6.4.0/dist/ethers.umd.min.js"></script>
+    <style>
+        :root {
+            --primary: #1e8449;
+            --primary-light: #27ae60;
+            --primary-dark: #196f3d;
+            --secondary: #3498db;
+            --dark: #2c3e50;
+            --light: #ecf0f1;
+            --danger: #e74c3c;
+            --success: #27ae60;
+            --warning: #f39c12;
+            --info: #3498db;
+            --gray: #95a5a6;
+            --card-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --hover-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+            color: var(--dark);
+            line-height: 1.6;
+        }
+
+        /* Header and Navigation */
+        .header {
+            background-color: var(--primary);
+            color: white;
+            padding: 1rem 0;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .brand {
+            font-size: 24px;
+            font-weight: bold;
+            text-decoration: none;
+            color: white;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 10px;
+        }
+
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+
+        .nav-links a:hover,
+        .nav-links a.active {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        /* Main Content */
+        .main-content {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 20px;
+        }
+
+        .page-title {
+            margin-bottom: 2rem;
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        /* Cards */
+        .card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: var(--card-shadow);
+            padding: 25px;
+            margin-bottom: 25px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .card:hover {
+            box-shadow: var(--hover-shadow);
+        }
+
+        .card-title {
+            color: var(--primary);
+            font-size: 20px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        /* Form Styles */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--dark);
+        }
+
+        input,
+        select,
+        textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 15px;
+            transition: all 0.3s;
+            background-color: var(--light);
+        }
+
+        input:focus,
+        select:focus,
+        textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(46, 204, 113, 0.1);
+        }
+
+        /* Button Styles */
+        .btn {
+            display: inline-block;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 600;
+            transition: all 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn:hover {
+            background-color: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-secondary {
+            background-color: var(--secondary);
+        }
+
+        .btn-secondary:hover {
+            background-color: #2980b9;
+        }
+
+        .btn-warning {
+            background-color: var(--warning);
+        }
+
+        .btn-warning:hover {
+            background-color: #e67e22;
+        }
+
+        .btn-danger {
+            background-color: var(--danger);
+        }
+
+        .btn-danger:hover {
+            background-color: #c0392b;
+        }
+
+        .btn-block {
+            display: block;
+            width: 100%;
+        }
+
+        /* Connection Status */
+        .connection-status {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px;
+            background-color: rgba(52, 152, 219, 0.05);
+            border-radius: 8px;
+            margin-bottom: 25px;
+        }
+
+        .wallet-address {
+            font-weight: 600;
+            color: var(--dark);
+            background-color: var(--light);
+            padding: 8px 15px;
+            border-radius: 20px;
+            display: inline-block;
+        }
+
+        /* Alerts */
+        .alert {
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 6px;
+            font-weight: 500;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .alert-success {
+            background-color: rgba(46, 204, 113, 0.1);
+            color: var(--success);
+            border-left: 4px solid var(--success);
+        }
+
+        .alert-error {
+            background-color: rgba(231, 76, 60, 0.1);
+            color: var(--danger);
+            border-left: 4px solid var(--danger);
+        }
+
+        .alert-warning {
+            background-color: rgba(243, 156, 18, 0.1);
+            color: var(--warning);
+            border-left: 4px solid var(--warning);
+        }
+
+        .alert-info {
+            background-color: rgba(52, 152, 219, 0.1);
+            color: var(--info);
+            border-left: 4px solid var(--info);
+        }
+
+        /* Dish Items */
+        .dish-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(500px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .dish-item {
+            background-color: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: var(--card-shadow);
+            transition: transform 0.2s, box-shadow 0.2s;
+            border-top: 5px solid var(--primary);
+        }
+
+        .dish-item:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--hover-shadow);
+        }
+
+        .dish-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .dish-title {
+            color: var(--primary);
+            font-size: 20px;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .dish-address {
+            font-family: monospace;
+            background-color: var(--light);
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 14px;
+            word-break: break-all;
+            margin: 10px 0;
+        }
+
+        .dish-specs {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 15px;
+            margin: 15px 0;
+        }
+
+        .dish-spec {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 6px;
+        }
+
+        .dish-spec-title {
+            display: block;
+            margin-bottom: 5px;
+            color: var(--gray);
+            font-size: 12px;
+            text-transform: uppercase;
+        }
+
+        .dish-spec-value {
+            color: var(--dark);
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .dish-actions {
+            margin-top: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .action-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .action-row label {
+            margin: 0;
+            min-width: 100px;
+        }
+
+        /* Badges */
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .badge-success {
+            background-color: rgba(46, 204, 113, 0.1);
+            color: var(--success);
+        }
+
+        .badge-danger {
+            background-color: rgba(231, 76, 60, 0.1);
+            color: var(--danger);
+        }
+
+        /* Stats Section */
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background-color: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: var(--card-shadow);
+            text-align: center;
+        }
+
+        .stat-title {
+            color: var(--gray);
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        .stat-value {
+            color: var(--primary);
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        /* Consumption Stats */
+        .consumption-stats {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #f0f0f0;
+        }
+
+        .stats-title {
+            font-size: 16px;
+            color: var(--dark);
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .progress-container {
+            background-color: #f0f0f0;
+            border-radius: 10px;
+            height: 8px;
+            width: 100%;
+            margin-bottom: 5px;
+        }
+
+        .progress-bar {
+            height: 8px;
+            border-radius: 10px;
+            background-color: var(--primary);
+        }
+
+        /* Owner Info */
+        .owner-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 10px 0;
+        }
+
+        .owner-address {
+            font-family: monospace;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 992px) {
+            .dish-list {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-container {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .stats-container {
+                grid-template-columns: 1fr;
+            }
+
+            .action-row {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .dish-specs {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        /* Add additional styling for sold out dishes */
+        .sold-out {
+            position: relative;
+            opacity: 0.9;
+        }
+
+        .sold-out::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border: 2px dashed var(--danger);
+            pointer-events: none;
+            border-radius: 8px;
+        }
+
+        /* Carbon Report Styles */
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 15px;
+        }
+
+        .table th,
+        .table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .table th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .table tr:hover {
+            background-color: rgba(46, 204, 113, 0.05);
+        }
+
+        .table-responsive {
+            overflow-x: auto;
+            margin-bottom: 20px;
+        }
+
+        .table-warning {
+            background-color: rgba(243, 156, 18, 0.1);
+        }
+
+        .section-title {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        #export-options {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        #carbon-credits-chart {
+            transition: all 0.3s ease;
+        }
+
+        #carbon-credits-chart:hover {
+            box-shadow: var(--hover-shadow);
+        }
+    </style>
+
+    <!-- Script to reset contract addresses -->
+    <script src="reset-contracts.js"></script>
+</head>
+
+<body>
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <a href="#" class="brand">GreenDish</a>
+                <div class="nav-links">
+                    <a href="index.html">Dashboard</a>
+                    <a href="profile.html">My Profile</a>
+                    <a href="admin.html" class="active">Admin Panel</a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="main-content">
+        <h1 class="page-title">Restaurant Dashboard</h1>
+
+        <div class="connection-status card">
+            <div>
+                <h3 class="card-title" style="margin-bottom: 5px; border-bottom: none;">Wallet Status</h3>
+                <span id="wallet-status" class="wallet-address">Not connected</span>
+            </div>
+            <button id="connect-wallet" class="btn">Connect Wallet</button>
+        </div>
+
+        <div class="stats-container">
+            <div class="stat-card">
+                <div class="stat-title">Total Dishes</div>
+                <div id="total-dishes" class="stat-value">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-title">Active Dishes</div>
+                <div id="active-dishes" class="stat-value">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-title">Total Inventory</div>
+                <div id="total-inventory" class="stat-value">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-title">Sold Items</div>
+                <div id="sold-items" class="stat-value">0</div>
+            </div>
+        </div>
+
+        <!-- Carbon Credits Report Section - Moved to top -->
+        <div class="card">
+            <h2 class="card-title">Carbon Credits Report</h2>
+            <div class="alert alert-info">
+                <strong>Sustainability Tracking:</strong> This report helps track the carbon credits consumed by
+                customers, useful for ESG reporting and sustainability initiatives.
+            </div>
+
+            <div class="section-title" style="margin-top: 20px;">
+                <h3>Carbon Credits Summary</h3>
+                <button id="generate-report" class="btn btn-secondary">Generate Report</button>
+            </div>
+
+            <div class="stats-container" style="margin-bottom: 30px;">
+                <div class="stat-card">
+                    <div class="stat-title">Total Carbon Credits</div>
+                    <div id="total-carbon-credits" class="stat-value">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-title">Dishes Sold</div>
+                    <div id="total-dishes-sold" class="stat-value">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-title">Average Credits Per Sale</div>
+                    <div id="avg-carbon-credits" class="stat-value">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-title">Unique Customers</div>
+                    <div id="unique-customers" class="stat-value">0</div>
+                </div>
+            </div>
+
+            <div id="carbon-credits-chart"
+                style="width: 100%; height: 300px; background-color: #f8f9fa; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                <p>Carbon credits data chart will appear here after generating the report</p>
+            </div>
+
+            <div style="margin-top: 20px;">
+                <h3>Detailed Transaction History</h3>
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Dish Name</th>
+                                <th>Buyer Address</th>
+                                <th>Quantity</th>
+                                <th>Carbon Credits</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody id="carbon-transactions">
+                            <tr>
+                                <td colspan="5" style="text-align: center;">Generate a report to see transaction history
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div style="margin-top: 20px; display: none;" id="export-options">
+                <button id="export-csv" class="btn btn-secondary">Export Report as CSV</button>
+            </div>
+        </div>
+
+        <div id="deploy-form" class="card">
+            <h2 class="card-title">Create New Dish Contract</h2>
+            <div class="alert alert-warning">
+                <strong>Note:</strong> As the owner, you will not be able to purchase dishes from your own contracts.
+                This is to ensure fair market practices.
+            </div>
+            <div class="form-group">
+                <label for="dish-name">Dish Name:</label>
+                <input type="text" id="dish-name" placeholder="Enter dish name" required>
+            </div>
+            <div class="form-group">
+                <label for="dish-price">Dish Price (in ETH):</label>
+                <input type="number" id="dish-price" step="0.001" min="0.001" placeholder="Enter dish price in ETH"
+                    required>
+            </div>
+            <div class="form-group">
+                <label for="total-seats">Initial Inventory:</label>
+                <input type="number" id="total-seats" min="1" placeholder="Enter initial inventory amount" required>
+            </div>
+            <div class="form-group">
+                <label for="carbon-credits">Carbon Credits (0-100):</label>
+                <input type="number" id="carbon-credits" min="0" max="100"
+                    placeholder="Enter carbon credits per dish (0-100)" required>
+            </div>
+            <div class="form-group">
+                <label for="main-component">Main Component:</label>
+                <input type="text" id="main-component" placeholder="Enter main component" required>
+            </div>
+            <div class="form-group">
+                <label for="supply-source">Supply Source:</label>
+                <input type="text" id="supply-source" placeholder="Enter supply source" required>
+            </div>
+            <button id="deploy-contract" class="btn btn-block">Deploy New Dish Contract</button>
+        </div>
+
+        <div id="status-messages"></div>
+
+        <div class="card">
+            <h2 class="card-title">Your Deployed Dish Contracts</h2>
+            <div id="dish-list">
+                <p>Connect your wallet to see deployed contracts</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Elements
+        const connectWalletBtn = document.getElementById('connect-wallet');
+        const walletStatus = document.getElementById('wallet-status');
+        const dishNameInput = document.getElementById('dish-name');
+        const dishPriceInput = document.getElementById('dish-price');
+        const totalSeatsInput = document.getElementById('total-seats');
+        const carbonCreditsInput = document.getElementById('carbon-credits');
+        const mainComponentInput = document.getElementById('main-component');
+        const supplySourceInput = document.getElementById('supply-source');
+        const deployContractBtn = document.getElementById('deploy-contract');
+        const statusMessages = document.getElementById('status-messages');
+        const dishList = document.getElementById('dish-list');
+        const totalDishesElement = document.getElementById('total-dishes');
+        const activeDishesElement = document.getElementById('active-dishes');
+        const totalInventoryElement = document.getElementById('total-inventory');
+        const soldItemsElement = document.getElementById('sold-items');
+
+        // State
+        let provider;
+        let signer;
+        let deployedDishes = [];
+        let dishFactoryAddress;
+        let dishFactoryABI;
+        let dishBookingABI;
+        let contractJson; // Store the full contract JSON
+
+        // Initialize
+        window.addEventListener('load', async function () {
+            try {
+                // For this example, we'll load the GreenDish contract ABI
+                const response = await fetch('artifacts/contracts/GreenDish.sol/GreenDish.json');
+                contractJson = await response.json();
+                dishBookingABI = contractJson.abi;
+
+                if (window.ethereum) {
+                    provider = new ethers.BrowserProvider(window.ethereum);
+                    init();
+                } else {
+                    walletStatus.textContent = "MetaMask not installed";
+                    showAlert("Please install MetaMask to use this application", "error");
+                }
+            } catch (error) {
+                console.error("Error loading contract data:", error);
+                showAlert("Error loading contract information. Please check the console.", "error");
+            }
+        });
+
+        // Initialize app
+        function init() {
+            connectWalletBtn.addEventListener('click', connectWallet);
+            deployContractBtn.addEventListener('click', deployNewDishContract);
+        }
+
+        // Connect wallet
+        async function connectWallet() {
+            try {
+                // Request account access
+                const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                signer = await provider.getSigner();
+                const userAddress = await signer.getAddress();
+
+                walletStatus.textContent = userAddress.substring(0, 6) + '...' + userAddress.substring(38);
+
+                // Listen for account changes
+                window.ethereum.on('accountsChanged', async function (accounts) {
+                    signer = await provider.getSigner();
+                    const newAddress = await signer.getAddress();
+                    walletStatus.textContent = newAddress.substring(0, 6) + '...' + newAddress.substring(38);
+                });
+
+                showAlert("Wallet connected successfully!", "success");
+
+                // Try to fetch previously deployed dishes from local storage
+                loadDeployedDishes();
+
+                // Setup event listeners for real-time updates
+                setupEventListeners();
+            } catch (error) {
+                console.error(error);
+                showAlert("Error connecting to wallet: " + error.message, "error");
+            }
+        }
+
+        // Load previously deployed dishes from local storage
+        function loadDeployedDishes() {
+            const storedDishes = localStorage.getItem('deployedDishes');
+            if (storedDishes) {
+                deployedDishes = JSON.parse(storedDishes);
+                renderDishList();
+                updateDashboardStats();
+
+                // Setup event listeners for real-time updates
+                setupEventListeners();
+            } else {
+                dishList.innerHTML = "<p>No dish contracts deployed yet</p>";
+                updateDashboardStats();
+            }
+        }
+
+        // Update dashboard statistics
+        function updateDashboardStats() {
+            let totalDishes = deployedDishes.length;
+            let activeDishes = deployedDishes.filter(dish => dish.isActive).length;
+            let totalInventory = deployedDishes.reduce((acc, dish) => acc + parseInt(dish.totalSeats || 0), 0);
+            let soldItems = 0; // This will be populated from contract data
+
+            // Update UI elements
+            totalDishesElement.textContent = totalDishes;
+            activeDishesElement.textContent = activeDishes;
+            totalInventoryElement.textContent = totalInventory;
+
+            // Calculate sold items
+            let soldPromises = [];
+            if (signer && deployedDishes.length > 0) {
+                deployedDishes.forEach(dish => {
+                    if (dish.address) {
+                        const dishContract = new ethers.Contract(
+                            dish.address,
+                            dishBookingABI,
+                            signer
+                        );
+
+                        // Try to get the difference between total and available inventory
+                        try {
+                            const promise = Promise.all([
+                                dishContract.Inventory(),
+                                dishContract.availableInventory()
+                            ]).then(([total, available]) => {
+                                const sold = parseInt(total) - parseInt(available);
+                                return sold > 0 ? sold : 0;
+                            }).catch(err => {
+                                console.log("Error getting dish data:", err);
+                                return 0;
+                            });
+
+                            soldPromises.push(promise);
+                        } catch (error) {
+                            console.log("Error setting up contract call:", error);
+                        }
+                    }
+                });
+
+                Promise.all(soldPromises).then(results => {
+                    soldItems = results.reduce((acc, val) => acc + val, 0);
+                    soldItemsElement.textContent = soldItems;
+                }).catch(err => {
+                    console.error("Error calculating sold items:", err);
+                    soldItemsElement.textContent = "N/A";
+                });
+            } else {
+                soldItemsElement.textContent = "0";
+            }
+        }
+
+        // Save deployed dishes to local storage
+        function saveDeployedDishes() {
+            localStorage.setItem('deployedDishes', JSON.stringify(deployedDishes));
+        }
+
+        // Deploy a new dish contract
+        async function deployNewDishContract() {
+            const dishName = dishNameInput.value.trim();
+            const dishPrice = dishPriceInput.value;
+            const Inventory = totalSeatsInput.value;
+            const carbonCredits = carbonCreditsInput.value;
+            const mainComponent = mainComponentInput.value.trim();
+            const supplySource = supplySourceInput.value.trim();
+
+            if (!dishName || !dishPrice || !Inventory || !carbonCredits || !mainComponent || !supplySource) {
+                showAlert("Please fill in all fields", "error");
+                return;
+            }
+
+            if (parseFloat(dishPrice) <= 0) {
+                showAlert("Dish price must be greater than 0", "error");
+                return;
+            }
+
+            if (parseInt(Inventory) <= 0) {
+                showAlert("Inventory must be greater than 0", "error");
+                return;
+            }
+
+            const carbonCreditsValue = parseInt(carbonCredits);
+            if (isNaN(carbonCreditsValue) || carbonCreditsValue < 0 || carbonCreditsValue > 100) {
+                showAlert("Carbon credits must be between 0 and 100", "error");
+                return;
+            }
+
+            try {
+                showAlert("Deploying new dish contract... Please confirm the transaction in MetaMask", "success");
+
+                // Convert dish price to wei
+                const dishPriceWei = ethers.parseEther(dishPrice.toString());
+
+                // Create a new contract factory
+                const dishFactory = new ethers.ContractFactory(
+                    dishBookingABI,
+                    contractJson.bytecode,
+                    signer
+                );
+
+                // Deploy the contract
+                const dishContract = await dishFactory.deploy(
+                    dishName,
+                    dishPriceWei,
+                    Inventory,
+                    carbonCredits,
+                    mainComponent,
+                    supplySource
+                );
+
+                // Wait for deployment to complete
+                await dishContract.waitForDeployment();
+
+                const contractAddress = await dishContract.getAddress();
+
+                // Add to deployed dishes list
+                const deploymentTime = new Date().toLocaleString();
+                deployedDishes.push({
+                    name: dishName,
+                    address: contractAddress,
+                    timestamp: deploymentTime,
+                    dishPrice: dishPrice,
+                    totalSeats: Inventory,
+                    carbonCredits: carbonCredits,
+                    mainComponent: mainComponent,
+                    supplySource: supplySource,
+                    isActive: true // Set to active by default
+                });
+
+                // Save to local storage
+                saveDeployedDishes();
+
+                // Update UI
+                renderDishList();
+                updateDashboardStats();
+
+                showAlert(`Dish contract "${dishName}" successfully deployed at ${contractAddress}`, "success");
+
+                // Clear form
+                dishNameInput.value = '';
+                dishPriceInput.value = '';
+                totalSeatsInput.value = '';
+                carbonCreditsInput.value = '';
+                mainComponentInput.value = '';
+                supplySourceInput.value = '';
+
+                // Save deployment info for the frontend
+                saveDeploymentInfo(contractAddress);
+
+                // Setup event listeners for the new contract
+                setupEventListeners();
+            } catch (error) {
+                console.error(error);
+                showAlert("Error deploying contract: " + error.message, "error");
+            }
+        }
+
+        // Save deployment info for the frontend
+        async function saveDeploymentInfo(contractAddress) {
+            try {
+                const deploymentData = {
+                    contractAddress: contractAddress,
+                    timestamp: new Date().toISOString()
+                };
+
+                // We'll use localStorage to store the latest contract
+                localStorage.setItem('latestDeployment', JSON.stringify(deploymentData));
+
+                // Create a simple API endpoint to update deployments.json
+                // Use the Fetch API to send a POST request with the deployment data
+                try {
+                    // We can't directly write to the file system from the browser,
+                    // but we can use the deployments.json as a reference for reading
+                    // This is a workaround to show the user the update was successful
+                    console.log("New contract deployment saved to localStorage:", deploymentData);
+                    showAlert("Contract address saved for the frontend. The application will now use this contract.", "success");
+
+                    // Add a refresh button to help users refresh the page
+                    const alert = document.createElement('div');
+                    alert.classList.add('alert', 'alert-success');
+                    alert.innerHTML = 'New contract deployed! You can now visit the <a href="index.html" style="color: #1e8449; text-decoration: underline;">main page</a> to interact with it.';
+                    statusMessages.appendChild(alert);
+                } catch (fetchError) {
+                    console.log("Could not update deployments.json directly. Using localStorage only.");
+                }
+            } catch (error) {
+                console.error("Error saving deployment info:", error);
+            }
+        }
+
+        // Render the list of deployed dishes
+        async function renderDishList() {
+            if (deployedDishes.length === 0) {
+                dishList.innerHTML = "<p>No dish contracts deployed yet</p>";
+                return;
+            }
+
+            let html = '';
+
+            for (let index = 0; index < deployedDishes.length; index++) {
+                const dish = deployedDishes[index];
+
+                // Check if current user is the contract owner
+                let isOwner = false;
+                let ownerAddress = 'Unknown';
+                let availableInventory = 'N/A';
+                let soldCount = 'N/A';
+                let consumptionPercentage = 0;
+
+                try {
+                    if (signer) {
+                        const userAddress = await signer.getAddress();
+
+                        const dishContract = new ethers.Contract(
+                            dish.address,
+                            dishBookingABI,
+                            signer
+                        );
+
+                        try {
+                            ownerAddress = await dishContract.owner();
+                            isOwner = (ownerAddress.toLowerCase() === userAddress.toLowerCase());
+
+                            // Get inventory data
+                            const totalInventory = await dishContract.Inventory();
+                            availableInventory = await dishContract.availableInventory();
+                            soldCount = totalInventory - availableInventory;
+                            consumptionPercentage = (soldCount / totalInventory) * 100;
+                        } catch (error) {
+                            console.log("Error fetching contract data:", error);
+                        }
+                    }
+                } catch (error) {
+                    console.error("Error checking owner:", error);
+                }
+
+                let ownerInfo = '';
+                if (ownerAddress !== 'Unknown') {
+                    ownerInfo = `
+                    <div class="owner-info">
+                        <span>Contract Owner:</span>
+                        <span class="owner-address">${ownerAddress.substring(0, 6)}...${ownerAddress.substring(38)}</span>
+                        ${isOwner ?
+                            '<span class="badge badge-success">You are the owner</span>' :
+                            '<span class="badge badge-danger">You are not the owner</span>'}
+                    </div>`;
+                }
+
+                // Create consumption stats HTML
+                let consumptionStats = '';
+                if (soldCount !== 'N/A') {
+                    consumptionStats = `
+                    <div class="consumption-stats">
+                        <h4 class="stats-title">Consumption Statistics</h4>
+                        <div class="dish-specs">
+                            <div class="dish-spec">
+                                <span class="dish-spec-title">Available</span>
+                                <span class="dish-spec-value">${availableInventory}</span>
+                            </div>
+                            <div class="dish-spec">
+                                <span class="dish-spec-title">Sold</span>
+                                <span class="dish-spec-value">${soldCount}</span>
+                            </div>
+                        </div>
+                        <div style="margin-top: 10px;">
+                            <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+                                <span>Consumption Rate</span>
+                                <span>${Math.round(consumptionPercentage)}%</span>
+                            </div>
+                            <div class="progress-container">
+                                <div class="progress-bar" style="width: ${consumptionPercentage}%"></div>
+                            </div>
+                        </div>
+                    </div>`;
+                }
+
+                html += `
+                <div class="dish-item ${availableInventory == 0 ? 'sold-out' : ''}">
+                    <div class="dish-header">
+                        <h3 class="dish-title">${dish.name}</h3>
+                        <span class="badge ${dish.isActive ? 'badge-success' : 'badge-danger'}">
+                            ${dish.isActive ? 'Active' : 'Inactive'}
+                        </span>
+                        ${availableInventory == 0 ? '<span class="badge badge-danger">Sold Out</span>' : ''}
+                    </div>
+                    
+                    <div>Contract Address: <span class="dish-address">${dish.address}</span></div>
+                    
+                    <div class="dish-specs">
+                        <div class="dish-spec">
+                            <span class="dish-spec-title">Price</span>
+                            <span class="dish-spec-value">${dish.dishPrice} ETH</span>
+                        </div>
+                        <div class="dish-spec">
+                            <span class="dish-spec-title">Inventory</span>
+                            <span class="dish-spec-value">${dish.totalSeats}</span>
+                        </div>
+                        <div class="dish-spec">
+                            <span class="dish-spec-title">Carbon Credits</span>
+                            <span class="dish-spec-value">${dish.carbonCredits || 'N/A'}</span>
+                        </div>
+                        <div class="dish-spec">
+                            <span class="dish-spec-title">Component</span>
+                            <span class="dish-spec-value">${dish.mainComponent || 'N/A'}</span>
+                        </div>
+                        <div class="dish-spec">
+                            <span class="dish-spec-title">Source</span>
+                            <span class="dish-spec-value">${dish.supplySource || 'N/A'}</span>
+                        </div>
+                        <div class="dish-spec">
+                            <span class="dish-spec-title">Deployed</span>
+                            <span class="dish-spec-value">${new Date(dish.timestamp).toLocaleDateString()}</span>
+                        </div>
+                    </div>
+                    
+                    ${consumptionStats}
+                    
+                    ${ownerInfo}
+                    
+                    <div class="dish-actions">
+                        ${isOwner ? `
+                        <div class="action-row">
+                            <label>Update Inventory:</label>
+                            <input type="number" min="0" placeholder="New inventory" id="inventory-${index}">
+                            <button onclick="updateDishInventory('${dish.address}', ${index})" class="btn">Update</button>
+                        </div>
+                        <div class="action-row">
+                            <label>Dish Status:</label>
+                            <select id="status-${index}" style="flex: 1;">
+                                <option value="true" ${dish.isActive ? 'selected' : ''}>Active</option>
+                                <option value="false" ${!dish.isActive ? 'selected' : ''}>Inactive</option>
+                            </select>
+                            <button onclick="toggleDishStatus('${dish.address}', ${index})" class="btn btn-warning">Update Status</button>
+                        </div>
+                        ` : '<p class="owner-warning">Only the contract owner can update inventory</p>'}
+                        <button class="btn btn-secondary" onclick="loadDish('${dish.address}')">Load This Dish</button>
+                    </div>
+                </div>
+                `;
+            }
+
+            dishList.innerHTML = html;
+        }
+
+        // Load a specific dish into the frontend
+        function loadDish(address) {
+            const deploymentData = {
+                contractAddress: address,
+                timestamp: new Date().toISOString()
+            };
+
+            // Save to localStorage
+            localStorage.setItem('latestDeployment', JSON.stringify(deploymentData));
+
+            // In a real app, this would update the deployments.json file via an API
+            // For our demo, we'll just redirect to the user interface
+            showAlert("Dish selected as active. Redirecting to the user interface...", "success");
+            setTimeout(() => {
+                window.location.href = "index.html";
+            }, 2000);
+        }
+
+        // Show an alert message
+        function showAlert(message, type) {
+            const alert = document.createElement('div');
+            alert.classList.add('alert');
+            alert.classList.add('alert-' + (type || 'info'));
+            alert.textContent = message;
+
+            statusMessages.innerHTML = '';
+            statusMessages.appendChild(alert);
+
+            // Remove alert after 5 seconds
+            setTimeout(() => {
+                alert.remove();
+            }, 5000);
+        }
+
+        // Function to update inventory
+        async function updateDishInventory(contractAddress, index) {
+            if (!signer) {
+                showAlert("Please connect your wallet first", "error");
+                return;
+            }
+
+            const inventoryInput = document.getElementById(`inventory-${index}`);
+            const newInventory = inventoryInput.value.trim();
+
+            if (!newInventory) {
+                showAlert("Please enter a new inventory value", "error");
+                return;
+            }
+
+            // Add extra validation to ensure we have a valid integer
+            if (!/^\d+$/.test(newInventory)) {
+                showAlert("Please enter a valid whole number for inventory", "error");
+                return;
+            }
+
+            const numericInventory = parseInt(newInventory);
+            if (isNaN(numericInventory) || numericInventory < 0) {
+                showAlert("Inventory cannot be negative and must be a valid number", "error");
+                return;
+            }
+
+            try {
+                showAlert("Updating inventory... Please confirm the transaction in MetaMask", "success");
+                console.log(`Attempting to update inventory for contract at ${contractAddress} to ${numericInventory}`);
+
+                // Create contract instance
+                const dishContract = new ethers.Contract(
+                    contractAddress,
+                    dishBookingABI,
+                    signer
+                );
+
+                try {
+                    // Call the updateInventory function 
+                    const tx = await dishContract.updateInventory(numericInventory);
+
+                    showAlert("Transaction submitted. Waiting for confirmation...", "success");
+                    console.log("Transaction submitted:", tx.hash);
+
+                    // Wait for transaction to complete
+                    const receipt = await tx.wait();
+                    console.log("Transaction confirmed:", receipt);
+
+                    // Update the UI and stored data
+                    deployedDishes[index].totalSeats = numericInventory;
+                    saveDeployedDishes();
+                    renderDishList();
+                    updateDashboardStats();
+
+                    showAlert(`Inventory successfully updated to ${numericInventory}`, "success");
+
+                    // Clear input
+                    inventoryInput.value = '';
+                } catch (error) {
+                    console.error("Transaction error details:", error);
+
+                    // Provide a more detailed error message
+                    let errorMessage = "Error updating inventory";
+
+                    if (error.reason) {
+                        errorMessage += `: ${error.reason}`;
+                    } else if (error.message) {
+                        errorMessage += `: ${error.message}`;
+                    }
+
+                    // Log detailed error information
+                    if (error.data) console.error("Error data:", error.data);
+                    if (error.code) console.error("Error code:", error.code);
+
+                    showAlert(errorMessage, "error");
+                }
+            } catch (error) {
+                console.error("Setup error:", error);
+                showAlert("Error setting up contract interaction: " + error.message, "error");
+            }
+        }
+
+        // Function to toggle dish status
+        async function toggleDishStatus(contractAddress, index) {
+            if (!signer) {
+                showAlert("Please connect your wallet first", "error");
+                return;
+            }
+
+            const statusSelect = document.getElementById(`status-${index}`);
+            const newStatus = statusSelect.value === 'true';
+
+            try {
+                showAlert(`Updating dish status to ${newStatus ? 'Active' : 'Inactive'}... Please confirm the transaction in MetaMask`, "success");
+
+                // Create contract instance
+                const dishContract = new ethers.Contract(
+                    contractAddress,
+                    dishBookingABI,
+                    signer
+                );
+
+                try {
+                    // Call the setDishStatus function
+                    const tx = await dishContract.setDishStatus(newStatus);
+
+                    showAlert("Transaction submitted. Waiting for confirmation...", "success");
+                    console.log("Transaction submitted:", tx.hash);
+
+                    // Wait for transaction to complete
+                    const receipt = await tx.wait();
+                    console.log("Transaction confirmed:", receipt);
+
+                    // Update the UI and stored data
+                    deployedDishes[index].isActive = newStatus;
+                    saveDeployedDishes();
+                    renderDishList();
+                    updateDashboardStats();
+
+                    showAlert(`Dish status successfully updated to ${newStatus ? 'Active' : 'Inactive'}`, "success");
+                } catch (error) {
+                    console.error("Transaction error details:", error);
+
+                    // Provide a more detailed error message
+                    let errorMessage = "Error updating dish status";
+
+                    if (error.reason) {
+                        errorMessage += `: ${error.reason}`;
+                    } else if (error.message) {
+                        errorMessage += `: ${error.message}`;
+                    }
+
+                    showAlert(errorMessage, "error");
+                }
+            } catch (error) {
+                console.error("Setup error:", error);
+                showAlert("Error setting up contract interaction: " + error.message, "error");
+            }
+        }
+
+        // Add a new function to listen for blockchain events that would affect dish status
+        async function setupEventListeners() {
+            if (!signer || deployedDishes.length === 0) return;
+
+            for (let index = 0; index < deployedDishes.length; index++) {
+                const dish = deployedDishes[index];
+
+                if (dish.address) {
+                    try {
+                        const dishContract = new ethers.Contract(
+                            dish.address,
+                            dishBookingABI,
+                            provider // Use provider to listen to events
+                        );
+
+                        // Listen for dish status changes
+                        dishContract.removeAllListeners(); // Remove any previous listeners
+
+                        // Listen for DishStatusChanged events
+                        dishContract.on("DishStatusChanged", async (isActive, event) => {
+                            console.log(`Dish status changed: ${isActive} for contract ${dish.address}`);
+
+                            // Update our local data
+                            deployedDishes[index].isActive = isActive;
+                            saveDeployedDishes();
+
+                            // Update the UI
+                            renderDishList();
+                            updateDashboardStats();
+
+                            // Show a notification
+                            showAlert(`Dish "${dish.name}" status automatically changed to ${isActive ? 'Active' : 'Inactive'}`, "info");
+                        });
+
+                        // Listen for InventoryUpdated events
+                        dishContract.on("InventoryUpdated", async (newInventory, event) => {
+                            console.log(`Inventory updated to ${newInventory} for contract ${dish.address}`);
+
+                            // Update the displayed inventory
+                            const availableInventory = await dishContract.availableInventory();
+
+                            // If available inventory is 0, check the status
+                            if (availableInventory == 0) {
+                                const isCurrentlyActive = await dishContract.isActive();
+                                if (isCurrentlyActive) {
+                                    showAlert(`Dish "${dish.name}" inventory is zero. Status should update automatically.`, "warning");
+                                }
+                            }
+
+                            // Update the UI regardless
+                            renderDishList();
+                            updateDashboardStats();
+                        });
+
+                        // Listen for DishPurchased events
+                        dishContract.on("DishPurchased", async (buyer, quantity, event) => {
+                            console.log(`${quantity} dishes purchased by ${buyer}`);
+
+                            // Check if inventory is now zero
+                            const availableInventory = await dishContract.availableInventory();
+                            if (availableInventory == 0) {
+                                // The contract should automatically set isActive to false
+                                // but we'll update our UI immediately without waiting for the event
+                                deployedDishes[index].isActive = false;
+                                saveDeployedDishes();
+
+                                showAlert(`Dish "${dish.name}" sold out! Status has been automatically set to Inactive.`, "info");
+                                renderDishList();
+                                updateDashboardStats();
+                            } else {
+                                // If not sold out, just refresh the data
+                                renderDishList();
+                                updateDashboardStats();
+                            }
+                        });
+
+                    } catch (error) {
+                        console.error(`Error setting up event listeners for contract ${dish.address}:`, error);
+                    }
+                }
+            }
+        }
+
+        // Add a function to manually check and refresh dish status
+        async function refreshDishStatuses() {
+            if (!signer || deployedDishes.length === 0) {
+                return;
+            }
+
+            let statusChanged = false;
+
+            for (let index = 0; index < deployedDishes.length; index++) {
+                const dish = deployedDishes[index];
+
+                if (dish.address) {
+                    try {
+                        const dishContract = new ethers.Contract(
+                            dish.address,
+                            dishBookingABI,
+                            signer
+                        );
+
+                        // Get current values from the contract
+                        const contractIsActive = await dishContract.isActive();
+                        const availableInventory = await dishContract.availableInventory();
+
+                        // Update our local data if there's a mismatch
+                        if (dish.isActive !== contractIsActive) {
+                            deployedDishes[index].isActive = contractIsActive;
+                            statusChanged = true;
+                        }
+
+                        // Check if inventory is zero but status is active (should not happen with the new contract)
+                        if (contractIsActive && availableInventory == 0) {
+                            showAlert(`Warning: Dish "${dish.name}" has zero inventory but is still active. This is unusual.`, "warning");
+                        }
+                    } catch (error) {
+                        console.error(`Error refreshing status for dish ${dish.name}:`, error);
+                    }
+                }
+            }
+
+            if (statusChanged) {
+                saveDeployedDishes();
+                renderDishList();
+                updateDashboardStats();
+                showAlert("Dish statuses refreshed from blockchain", "info");
+            }
+        }
+
+        // Add auto-refresh functionality
+        function startAutoRefresh() {
+            // Check statuses every 30 seconds
+            setInterval(refreshDishStatuses, 30000);
+
+            // Also check after loading the page
+            setTimeout(refreshDishStatuses, 2000);
+        }
+
+        // Start the auto-refresh when page loads
+        window.addEventListener('load', function () {
+            startAutoRefresh();
+        });
+
+        // Carbon Credit Report Functions
+        document.getElementById('generate-report').addEventListener('click', generateCarbonReport);
+
+        // Data structure to store purchase events
+        let purchaseEvents = [];
+
+        // Function to fetch past DishPurchased events and generate a carbon report
+        async function generateCarbonReport() {
+            if (!signer || deployedDishes.length === 0) {
+                showAlert("Please connect your wallet and deploy a dish contract first", "error");
+                return;
+            }
+
+            showAlert("Generating carbon credits report... This may take a moment.", "info");
+
+            purchaseEvents = [];
+            let totalCarbonCredits = 0;
+            let totalDishesSold = 0;
+            let customerAddresses = new Set();
+
+            // Iterate through all deployed dish contracts
+            for (const dish of deployedDishes) {
+                try {
+                    const dishContract = new ethers.Contract(
+                        dish.address,
+                        dishBookingABI,
+                        signer
+                    );
+
+                    // Get carbon credits value for this dish
+                    const carbonCreditsPerDish = await dishContract.CarbonCredits();
+
+                    // Get past events
+                    // Note: This uses the provider's getLogs method which may have limitations
+                    // For a production app, you might want to use an indexer like TheGraph
+                    const filter = dishContract.filters.DishPurchased();
+
+                    try {
+                        // Try to get events from the last 1000 blocks
+                        const currentBlockNumber = await provider.getBlockNumber();
+                        const fromBlock = Math.max(0, currentBlockNumber - 1000);
+
+                        const events = await dishContract.queryFilter(filter, fromBlock);
+
+                        for (const event of events) {
+                            const buyer = event.args[0];
+                            const quantity = event.args[1];
+
+                            // Get block timestamp for the date
+                            const block = await provider.getBlock(event.blockNumber);
+                            const timestamp = block ? new Date(block.timestamp * 1000) : new Date();
+
+                            // Calculate carbon credits for this purchase
+                            const carbonCredits = carbonCreditsPerDish * quantity;
+
+                            // Add to totals
+                            totalCarbonCredits += Number(carbonCredits);
+                            totalDishesSold += Number(quantity);
+                            customerAddresses.add(buyer);
+
+                            // Store the event data
+                            purchaseEvents.push({
+                                dishName: dish.name,
+                                buyer: buyer,
+                                quantity: quantity.toString(),
+                                carbonCredits: carbonCredits.toString(),
+                                date: timestamp.toLocaleString(),
+                                timestamp: timestamp.getTime() // For sorting
+                            });
+                        }
+                    } catch (error) {
+                        console.error("Error fetching events:", error);
+
+                        // Fall back to checking current state if event fetching fails
+                        const inventory = await dishContract.Inventory();
+                        const availableInventory = await dishContract.availableInventory();
+                        const soldCount = inventory - availableInventory;
+
+                        if (soldCount > 0) {
+                            totalDishesSold += Number(soldCount);
+                            const estimatedCarbonCredits = carbonCreditsPerDish * soldCount;
+                            totalCarbonCredits += Number(estimatedCarbonCredits);
+
+                            // Add an estimated entry
+                            purchaseEvents.push({
+                                dishName: dish.name,
+                                buyer: "Multiple buyers (estimated)",
+                                quantity: soldCount.toString(),
+                                carbonCredits: estimatedCarbonCredits.toString(),
+                                date: "Various (estimated)",
+                                timestamp: Date.now(),
+                                isEstimate: true
+                            });
+                        }
+                    }
+                } catch (error) {
+                    console.error(`Error processing dish ${dish.name}:`, error);
+                }
+            }
+
+            // Update the UI with the data
+            document.getElementById('total-carbon-credits').textContent = totalCarbonCredits;
+            document.getElementById('total-dishes-sold').textContent = totalDishesSold;
+            document.getElementById('unique-customers').textContent = customerAddresses.size;
+
+            // Calculate average
+            const avgCredits = totalDishesSold > 0 ? (totalCarbonCredits / totalDishesSold).toFixed(2) : 0;
+            document.getElementById('avg-carbon-credits').textContent = avgCredits;
+
+            // Populate the transactions table
+            renderTransactionsTable();
+
+            // Show export options
+            document.getElementById('export-options').style.display = 'block';
+
+            // Create a basic chart visualization (placeholder for now)
+            createCarbonCreditsChart();
+
+            showAlert("Carbon credits report generated successfully!", "success");
+        }
+
+        // Function to render the transactions table
+        function renderTransactionsTable() {
+            const tableBody = document.getElementById('carbon-transactions');
+
+            // Sort by date, newest first
+            purchaseEvents.sort((a, b) => b.timestamp - a.timestamp);
+
+            if (purchaseEvents.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="5" style="text-align: center;">No transactions found</td></tr>`;
+                return;
+            }
+
+            let html = '';
+
+            for (const event of purchaseEvents) {
+                // Abbreviate buyer address
+                const shortBuyer = event.isEstimate ? event.buyer :
+                    `${event.buyer.substring(0, 6)}...${event.buyer.substring(38)}`;
+
+                html += `
+                <tr ${event.isEstimate ? 'class="table-warning"' : ''}>
+                    <td>${event.dishName}</td>
+                    <td>${shortBuyer}</td>
+                    <td>${event.quantity}</td>
+                    <td>${event.carbonCredits}</td>
+                    <td>${event.date}</td>
+                </tr>
+                `;
+            }
+
+            tableBody.innerHTML = html;
+        }
+
+        // Function to create a simple chart visualization
+        function createCarbonCreditsChart() {
+            const chartContainer = document.getElementById('carbon-credits-chart');
+
+            // For now, just showing a message that would be replaced with a real chart
+            // In a production app, you would use a library like Chart.js
+            chartContainer.innerHTML = `
+            <div style="text-align: center;">
+                <h4>Carbon Credits by Dish</h4>
+                <div style="display: flex; height: 200px; align-items: flex-end; justify-content: space-around; margin-top: 20px;">
+                    ${createBarChartHTML()}
+                </div>
+            </div>
+            `;
+        }
+
+        // Helper function to create a simple bar chart HTML
+        function createBarChartHTML() {
+            // Group carbon credits by dish name
+            const dishCredits = {};
+            let maxCredits = 0;
+
+            purchaseEvents.forEach(event => {
+                if (!dishCredits[event.dishName]) {
+                    dishCredits[event.dishName] = 0;
+                }
+                dishCredits[event.dishName] += Number(event.carbonCredits);
+                maxCredits = Math.max(maxCredits, dishCredits[event.dishName]);
+            });
+
+            let html = '';
+
+            // Create a bar for each dish
+            Object.keys(dishCredits).forEach((dishName, index) => {
+                const credits = dishCredits[dishName];
+                const height = maxCredits > 0 ? (credits / maxCredits * 100) : 0;
+                const color = getColorForIndex(index);
+
+                html += `
+                <div style="display: flex; flex-direction: column; align-items: center; margin: 0 10px;">
+                    <div style="height: ${height}%; width: 40px; background-color: ${color}; min-height: 20px;"></div>
+                    <div style="margin-top: 10px; font-size: 12px; max-width: 80px; text-align: center;">${dishName}</div>
+                    <div style="font-weight: bold;">${credits}</div>
+                </div>
+                `;
+            });
+
+            return html || '<div>No data available for chart</div>';
+        }
+
+        // Helper function to get a color based on index
+        function getColorForIndex(index) {
+            const colors = ['#27ae60', '#2980b9', '#8e44ad', '#f39c12', '#c0392b', '#16a085'];
+            return colors[index % colors.length];
+        }
+
+        // Export functions
+        document.getElementById('export-csv').addEventListener('click', exportCarbonReportCSV);
+
+        // Function to export carbon report as CSV
+        function exportCarbonReportCSV() {
+            if (purchaseEvents.length === 0) {
+                showAlert("No data to export", "error");
+                return;
+            }
+
+            // Create CSV content
+            let csv = 'Dish Name,Buyer Address,Quantity,Carbon Credits,Date\n';
+
+            purchaseEvents.forEach(event => {
+                csv += `"${event.dishName}","${event.buyer}",${event.quantity},${event.carbonCredits},"${event.date}"\n`;
+            });
+
+            // Create download link
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `carbon-credits-report-${new Date().toISOString().split('T')[0]}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            showAlert("CSV file exported successfully", "success");
+        }
+    </script>
+</body>
+
+</html>

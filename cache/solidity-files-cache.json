@@ -1,0 +1,75 @@
+{
+  "_format": "hh-sol-cache-2",
+  "files": {
+    "/Users/nicoleng/Desktop/hw2 x project/contracts/GreenDish.sol": {
+      "lastModificationDate": 1746464151672,
+      "contentHash": "186b760ac26b4416323b0751c1c88ec6",
+      "sourceName": "contracts/GreenDish.sol",
+      "solcConfig": {
+        "version": "0.8.19",
+        "settings": {
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.0"
+      ],
+      "artifacts": [
+        "GreenDish"
+      ]
+    },
+    "/Users/nicoleng/Desktop/hw2 x project/contracts/token.sol": {
+      "lastModificationDate": 1746454631077,
+      "contentHash": "57ed287c994892dc743849fb85bc20ae",
+      "sourceName": "contracts/token.sol",
+      "solcConfig": {
+        "version": "0.8.19",
+        "settings": {
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.0"
+      ],
+      "artifacts": [
+        "GreenCoin"
+      ]
+    }
+  }
+}

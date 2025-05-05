@@ -1,0 +1,960 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Profile - GreenDish</title>
+    <script src="https://cdn.jsdelivr.net/npm/web3@1.5.2/dist/web3.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/ethers@6.4.0/dist/ethers.umd.min.js"></script>
+    <style>
+        :root {
+            --primary: #1e8449;
+            --primary-light: #27ae60;
+            --primary-dark: #196f3d;
+            --secondary: #3498db;
+            --dark: #2c3e50;
+            --light: #ecf0f1;
+            --danger: #e74c3c;
+            --success: #27ae60;
+            --warning: #f39c12;
+            --info: #3498db;
+            --gray: #95a5a6;
+            --card-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --hover-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+            color: var(--dark);
+            line-height: 1.6;
+        }
+
+        /* Header and Navigation */
+        .header {
+            background-color: var(--primary);
+            color: white;
+            padding: 1rem 0;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .brand {
+            font-size: 24px;
+            font-weight: bold;
+            text-decoration: none;
+            color: white;
+        }
+
+        .main-content {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 20px;
+        }
+
+        h1,
+        h2,
+        h3 {
+            color: var(--primary);
+            margin-bottom: 1rem;
+        }
+
+        /* Card Styles */
+        .card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: var(--card-shadow);
+            padding: 25px;
+            margin-bottom: 25px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .card:hover {
+            box-shadow: var(--hover-shadow);
+        }
+
+        .card-title {
+            color: var(--primary);
+            font-size: 20px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        /* Navigation */
+        .nav-links {
+            display: flex;
+            gap: 10px;
+        }
+
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            padding: 8px 15px;
+            border-radius: 6px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .nav-links a:hover,
+        .nav-links a.active {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        /* Button Styles */
+        .btn {
+            display: inline-block;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 600;
+            transition: all 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn:hover {
+            background-color: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-secondary {
+            background-color: var(--secondary);
+        }
+
+        .btn-secondary:hover {
+            background-color: #2980b9;
+        }
+
+        /* Connection Status */
+        .connection-status {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px;
+            background-color: rgba(52, 152, 219, 0.05);
+            border-radius: 8px;
+            margin-bottom: 25px;
+        }
+
+        .wallet-address {
+            font-weight: 600;
+            color: var(--dark);
+            background-color: var(--light);
+            padding: 8px 15px;
+            border-radius: 20px;
+            display: inline-block;
+        }
+
+        /* Profile Header */
+        .profile-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 30px;
+            padding: 30px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: var(--card-shadow);
+        }
+
+        .profile-avatar {
+            width: 100px;
+            height: 100px;
+            background-color: var(--primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 38px;
+            font-weight: bold;
+            margin-right: 30px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .profile-info {
+            flex-grow: 1;
+        }
+
+        .profile-info h2 {
+            margin-bottom: 10px;
+            color: var(--dark);
+        }
+
+        .address {
+            font-family: monospace;
+            font-size: 0.9em;
+            background-color: var(--light);
+            padding: 8px 15px;
+            border-radius: 6px;
+            display: inline-block;
+            margin-top: 5px;
+        }
+
+        /* Stats Section */
+        .dish-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background-color: white;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: var(--card-shadow);
+            text-align: center;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--hover-shadow);
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: bold;
+            color: var(--primary);
+            margin: 10px 0;
+        }
+
+        .stat-label {
+            font-size: 16px;
+            color: var(--gray);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Section Styles */
+        .section {
+            background-color: white;
+            border-radius: 8px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: var(--card-shadow);
+        }
+
+        .section-title {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .section-title h2 {
+            margin: 0;
+            color: var(--primary);
+        }
+
+        /* Table Styles */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            background-color: white;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        th,
+        td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        /* Address and Code Styles */
+        .address-code {
+            font-family: monospace;
+            font-size: 0.85em;
+            background-color: var(--light);
+            padding: 5px 10px;
+            border-radius: 4px;
+            color: var(--primary-dark);
+        }
+
+        .no-dishes {
+            padding: 40px;
+            text-align: center;
+            color: var(--gray);
+            font-style: italic;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+
+        /* Alerts */
+        .alert {
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 6px;
+            font-weight: 500;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .alert-success {
+            background-color: rgba(46, 204, 113, 0.1);
+            color: var(--success);
+            border-left: 4px solid var(--success);
+        }
+
+        .alert-error {
+            background-color: rgba(231, 76, 60, 0.1);
+            color: var(--danger);
+            border-left: 4px solid var(--danger);
+        }
+
+        /* Details and Expandable Content */
+        details {
+            font-size: 0.9em;
+            cursor: pointer;
+        }
+
+        details summary {
+            color: var(--secondary);
+            font-weight: 600;
+            padding: 8px 0;
+            outline: none;
+        }
+
+        details[open] summary {
+            color: var(--secondary);
+            margin-bottom: 10px;
+        }
+
+        details p {
+            margin: 5px 0;
+            padding: 5px 0 5px 15px;
+            border-left: 2px solid #f0f0f0;
+        }
+
+        /* Loading spinner */
+        .loading-spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--primary);
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 2s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .profile-header {
+                flex-direction: column;
+                text-align: center;
+                padding: 20px;
+            }
+
+            .profile-avatar {
+                margin: 0 auto 20px;
+            }
+
+            .dish-stats {
+                grid-template-columns: 1fr;
+            }
+
+            .section-title {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            table {
+                display: block;
+                overflow-x: auto;
+            }
+        }
+    </style>
+    <!-- Script to reset contract addresses -->
+    <script src="reset-contracts.js"></script>
+</head>
+
+<body>
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <a href="#" class="brand">GreenDish</a>
+                <div class="nav-links">
+                    <a href="index.html">Dashboard</a>
+                    <a href="profile.html" class="active">My Profile</a>
+                    <a href="admin.html">Admin Panel</a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="main-content">
+        <div class="connection-status card">
+            <div>
+                <h3 class="card-title" style="margin-bottom: 5px; border-bottom: none;">Wallet Status</h3>
+                <span id="wallet-status" class="wallet-address">Not connected</span>
+            </div>
+            <button id="connect-wallet" class="btn">Connect Wallet</button>
+        </div>
+
+        <div id="profile-content" style="display: none;">
+            <div class="profile-header">
+                <div class="profile-avatar" id="profile-initial">?</div>
+                <div class="profile-info">
+                    <h2>Your Account</h2>
+                    <p>Wallet Address: <span class="address" id="user-address">0x...</span></p>
+                    <p style="margin-top: 10px;">Track your dish purchases and manage your profile.</p>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">
+                    <h2>Your Dish Statistics</h2>
+                </div>
+                <div class="dish-stats">
+                    <div class="stat-card">
+                        <div class="stat-value" id="total-dishes">0</div>
+                        <div class="stat-label">Restaurants</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="total-dishes-count">0</div>
+                        <div class="stat-label">Dishes Purchased</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="total-spent">0.00</div>
+                        <div class="stat-label">ETH Spent</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="total-carbon">0</div>
+                        <div class="stat-label">Carbon Credits</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">
+                    <h2>Your Dish Collection</h2>
+                    <button id="refresh-dishes" class="btn">Refresh Collection</button>
+                </div>
+                <div class="dishes-container">
+                    <div id="dishes-loading" class="loading-spinner" style="display: none;"></div>
+                    <table id="dishes-table">
+                        <thead>
+                            <tr>
+                                <th>Dish Name</th>
+                                <th>Quantity</th>
+                                <th>Price Per Dish</th>
+                                <th>Total Value</th>
+                                <th>Details</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dishes-body">
+                            <!-- Tickets will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">
+                    <h2>Your Dish Collection Across Restaurants</h2>
+                    <button id="load-all-dishes" class="btn">Load All Restaurants</button>
+                </div>
+                <p>View all dishes you've purchased across all restaurants in the network:</p>
+                <div id="all-dishes-container" style="display:none; margin-top: 20px;">
+                    <table id="all-dishes-table">
+                        <thead>
+                            <tr>
+                                <th>Dish Name</th>
+                                <th>Quantity</th>
+                                <th>Restaurant</th>
+                            </tr>
+                        </thead>
+                        <tbody id="all-dishes-body">
+                            <!-- Dishes will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="status-messages"></div>
+    </div>
+
+    <script>
+        // Persistent wallet connection key
+        const WALLET_CONNECTION_KEY = 'greenDishWalletConnection';
+
+        // ABI will be loaded from artifacts
+        let dishBookingABI;
+
+        // Provider and contract
+        let provider;
+        let signer;
+
+        // Dom elements
+        const connectWalletBtn = document.getElementById('connect-wallet');
+        const walletStatus = document.getElementById('wallet-status');
+        const profileContent = document.getElementById('profile-content');
+        const userAddressElem = document.getElementById('user-address');
+        const profileInitial = document.getElementById('profile-initial');
+        const totalDishesElem = document.getElementById('total-dishes');
+        const totalDishesCountElem = document.getElementById('total-dishes-count');
+        const totalSpentElem = document.getElementById('total-spent');
+        const totalCarbonElem = document.getElementById('total-carbon');
+        const dishesBody = document.getElementById('dishes-body');
+        const refreshDishesBtn = document.getElementById('refresh-dishes');
+        const statusMessages = document.getElementById('status-messages');
+        const dishesLoading = document.getElementById('dishes-loading');
+
+        // Initialize
+        window.addEventListener('load', async function () {
+            try {
+                // Load contract ABI from artifacts
+                const response = await fetch('artifacts/contracts/GreenDish.sol/GreenDish.json');
+                const contractJson = await response.json();
+                dishBookingABI = contractJson.abi;
+
+                if (window.ethereum) {
+                    provider = new ethers.BrowserProvider(window.ethereum);
+                    init();
+
+                    // Check for persisted wallet connection
+                    checkPersistedConnection();
+                } else {
+                    walletStatus.textContent = "MetaMask not installed";
+                    showAlert("Please install MetaMask to use this application", "error");
+                }
+            } catch (error) {
+                console.error("Error loading contract data:", error);
+                showAlert("Error loading contract information. Please check the console.", "error");
+            }
+        });
+
+        // Function to check for persisted wallet connection
+        async function checkPersistedConnection() {
+            const persistedConnection = localStorage.getItem(WALLET_CONNECTION_KEY);
+            if (persistedConnection === 'true') {
+                try {
+                    // Try to auto-connect the wallet
+                    await connectWallet(true); // Auto mode
+                } catch (error) {
+                    console.error("Could not auto-connect wallet:", error);
+                    // Clear the persisted connection state if auto-connect fails
+                    localStorage.removeItem(WALLET_CONNECTION_KEY);
+                }
+            }
+        }
+
+        // Initialize app
+        function init() {
+            connectWalletBtn.addEventListener('click', () => connectWallet(false)); // Manual mode
+            refreshDishesBtn.addEventListener('click', loadDishes);
+            document.getElementById('load-all-dishes').addEventListener('click', loadAllUserDishes);
+        }
+
+        // Connect wallet
+        async function connectWallet(autoMode = false) {
+            try {
+                // Request account access
+                const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                signer = await provider.getSigner();
+                const userAddress = await signer.getAddress();
+
+                walletStatus.textContent = userAddress.substring(0, 6) + '...' + userAddress.substring(38);
+                connectWalletBtn.textContent = "Wallet Connected";
+                connectWalletBtn.disabled = true;
+                connectWalletBtn.style.opacity = "0.7";
+
+                // Show profile content
+                profileContent.style.display = 'block';
+
+                // Set user address
+                userAddressElem.textContent = userAddress;
+
+                // Set profile initial (first character of address after 0x)
+                profileInitial.textContent = userAddress.substring(2, 3).toUpperCase();
+
+                // Persist connection state
+                localStorage.setItem(WALLET_CONNECTION_KEY, 'true');
+                localStorage.setItem('walletAddress', userAddress);
+
+                // Listen for account changes
+                window.ethereum.on('accountsChanged', async function (accounts) {
+                    signer = await provider.getSigner();
+                    const newAddress = await signer.getAddress();
+                    walletStatus.textContent = newAddress.substring(0, 6) + '...' + newAddress.substring(38);
+                    userAddressElem.textContent = newAddress;
+                    profileInitial.textContent = newAddress.substring(2, 3).toUpperCase();
+                    localStorage.setItem('walletAddress', newAddress);
+
+                    // Reload dishes
+                    loadDishes();
+                });
+
+                if (!autoMode) {
+                    showAlert("Wallet connected successfully!", "success");
+                }
+
+                // Load dishes
+                loadDishes();
+            } catch (error) {
+                console.error(error);
+                if (!autoMode) {
+                    showAlert("Error connecting to wallet: " + error.message, "error");
+                }
+                localStorage.removeItem(WALLET_CONNECTION_KEY);
+            }
+        }
+
+        // Load dishes from all dishes
+        async function loadDishes() {
+            if (!signer) {
+                showAlert("Please connect your wallet first", "error");
+                return;
+            }
+
+            const userAddress = await signer.getAddress();
+            showAlert("Loading your dish collection...", "success");
+
+            // Show loading spinner
+            dishesLoading.style.display = 'block';
+            dishesBody.innerHTML = '';
+
+            // Get deployed dishes from localStorage
+            const storedDishes = localStorage.getItem('deployedDishes');
+            let deployedDishes = [];
+
+            if (storedDishes) {
+                deployedDishes = JSON.parse(storedDishes);
+            } else {
+                // Try to at least check the current dish contract
+                const latestDeployment = localStorage.getItem('latestDeployment');
+                if (latestDeployment) {
+                    const deploymentData = JSON.parse(latestDeployment);
+                    const contractAddress = deploymentData.contractAddress;
+
+                    try {
+                        const dishContract = new ethers.Contract(
+                            contractAddress,
+                            dishBookingABI,
+                            signer
+                        );
+
+                        const dishName = await dishContract.dishName();
+
+                        deployedDishes = [{
+                            name: dishName,
+                            address: contractAddress
+                        }];
+                    } catch (error) {
+                        console.error("Error checking latest deployment:", error);
+                    }
+                }
+            }
+
+            if (deployedDishes.length === 0) {
+                dishesLoading.style.display = 'none';
+                showAlert("No dish contracts found. Please visit the dashboard to explore restaurants.", "error");
+
+                dishesBody.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="no-dishes">No dishes found in your collection. Visit the Dashboard to browse and purchase dishes.</td>
+                    </tr>
+                `;
+
+                // Reset statistics
+                totalDishesElem.textContent = "0";
+                totalDishesCountElem.textContent = "0";
+                totalSpentElem.textContent = "0.00";
+                totalCarbonElem.textContent = "0";
+
+                return;
+            }
+
+            let dishRecords = [];
+            let totalRestaurantsWithDishes = 0;
+            let totalDishesCount = 0;
+            let totalEthSpent = 0;
+            let totalCarbonCredits = 0;
+
+            // Check each dish contract for dishes
+            for (const dish of deployedDishes) {
+                try {
+                    // Create contract instance for this dish
+                    const dishContract = new ethers.Contract(
+                        dish.address,
+                        dishBookingABI,
+                        signer
+                    );
+
+                    // Get dishes for this dish
+                    const dishCount = await dishContract.DishesBought(userAddress);
+
+                    if (dishCount > 0) {
+                        totalRestaurantsWithDishes++;
+                        totalDishesCount += Number(dishCount);
+
+                        // Get dish details
+                        const dishName = await dishContract.dishName();
+                        const dishPrice = await dishContract.dishPrice();
+                        const dishPriceEth = ethers.formatEther(dishPrice);
+                        const totalValue = Number(dishPriceEth) * Number(dishCount);
+                        totalEthSpent += totalValue;
+
+                        // Try to get additional information if available
+                        let carbonCredits = "N/A";
+                        let carbonCreditsValue = 0;
+                        let mainComponent = "N/A";
+                        let supplySource = "N/A";
+
+                        try {
+                            carbonCredits = await dishContract.CarbonCredits();
+                            carbonCreditsValue = Number(carbonCredits) * Number(dishCount);
+                            totalCarbonCredits += carbonCreditsValue;
+                            mainComponent = await dishContract.mainComponent();
+                            supplySource = await dishContract.SupplySource();
+                        } catch (error) {
+                            console.log("This contract doesn't have the new properties, using defaults");
+                        }
+
+                        // Create a record for the table
+                        dishRecords.push({
+                            name: dishName,
+                            dishes: dishCount.toString(),
+                            price: dishPriceEth,
+                            value: totalValue.toFixed(6),
+                            carbonCredits: carbonCredits.toString(),
+                            totalCarbonCredits: carbonCreditsValue,
+                            mainComponent: mainComponent,
+                            supplySource: supplySource,
+                            date: 'Unknown' // We don't have purchase date in the contract
+                        });
+                    }
+                } catch (error) {
+                    console.error(`Error checking dishes for ${dish.name}:`, error);
+                }
+            }
+
+            // Update statistics
+            totalDishesElem.textContent = totalRestaurantsWithDishes;
+            totalDishesCountElem.textContent = totalDishesCount;
+            totalSpentElem.textContent = totalEthSpent.toFixed(4);
+            totalCarbonElem.textContent = totalCarbonCredits;
+
+            // Hide loading spinner
+            dishesLoading.style.display = 'none';
+
+            // Show dishes or no dishes message
+            if (dishRecords.length > 0) {
+                // Sort by dish name
+                dishRecords.sort((a, b) => a.name.localeCompare(b.name));
+
+                // Add to table
+                dishRecords.forEach(record => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${record.name}</td>
+                        <td>${record.dishes}</td>
+                        <td>${record.price} ETH</td>
+                        <td>${record.value} ETH</td>
+                        <td>
+                            <details>
+                                <summary>View Details</summary>
+                                <p>Carbon Credits: ${record.carbonCredits} per dish (Total: ${record.totalCarbonCredits})</p>
+                                <p>Main Component: ${record.mainComponent}</p>
+                                <p>Supply Source: ${record.supplySource}</p>
+                            </details>
+                        </td>
+                    `;
+                    dishesBody.appendChild(row);
+                });
+
+                showAlert("Your dish collection loaded successfully!", "success");
+            } else {
+                dishesBody.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="no-dishes">You haven't purchased any dishes yet. Visit the Dashboard to browse available dishes.</td>
+                    </tr>
+                `;
+
+                showAlert("No dishes found in your collection", "error");
+            }
+        }
+
+        // Show alert message
+        function showAlert(message, type) {
+            const alert = document.createElement('div');
+            alert.classList.add('alert');
+            alert.classList.add(type === 'error' ? 'alert-error' : 'alert-success');
+            alert.textContent = message;
+
+            statusMessages.innerHTML = '';
+            statusMessages.appendChild(alert);
+
+            // Remove alert after 5 seconds
+            setTimeout(() => {
+                alert.remove();
+            }, 5000);
+        }
+
+        // Load dishes from all restaurants
+        async function loadAllUserDishes() {
+            if (!signer) {
+                showAlert("Please connect your wallet first", "error");
+                return;
+            }
+
+            const userAddress = await signer.getAddress();
+            showAlert("Loading your dish collection across all restaurants...", "success");
+
+            // Get deployed dishes from localStorage
+            const storedDishes = localStorage.getItem('deployedDishes');
+            let deployedDishes = [];
+
+            if (storedDishes) {
+                deployedDishes = JSON.parse(storedDishes);
+            } else {
+                // Try to at least check the current dishes contract
+                const latestDeployment = localStorage.getItem('latestDeployment');
+                if (latestDeployment) {
+                    const deploymentData = JSON.parse(latestDeployment);
+                    const contractAddress = deploymentData.contractAddress;
+
+                    try {
+                        const dishContract = new ethers.Contract(
+                            contractAddress,
+                            dishBookingABI,
+                            signer
+                        );
+
+                        const dishName = await dishContract.dishName();
+
+                        deployedDishes = [{
+                            name: dishName,
+                            address: contractAddress
+                        }];
+                    } catch (error) {
+                        console.error("Error checking latest deployment:", error);
+                    }
+                }
+            }
+
+            if (deployedDishes.length === 0) {
+                showAlert("No dish contracts found. Please visit the dashboard to explore restaurants.", "error");
+                return;
+            }
+
+            // Container for all dishes
+            const allDishesContainer = document.getElementById('all-dishes-container');
+            const allDishesBody = document.getElementById('all-dishes-body');
+            allDishesBody.innerHTML = ''; // Clear existing content
+
+            let dishesFound = false;
+
+            // Check each dishes contract for dishes
+            for (const dish of deployedDishes) {
+                try {
+                    // Create contract instance for this dishes
+                    const dishContract = new ethers.Contract(
+                        dish.address,
+                        dishBookingABI,
+                        signer
+                    );
+
+                    // Get dishes for this dishes
+                    const dishCount = await dishContract.DishesBought(userAddress);
+
+                    if (dishCount > 0) {
+                        dishesFound = true;
+
+                        // Add to the table
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${dish.name || 'Unknown Dish'}</td>
+                            <td>${dishCount.toString()}</td>
+                            <td><span class="address-code">${dish.address.substring(0, 6)}...${dish.address.substring(38)}</span></td>
+                        `;
+                        allDishesBody.appendChild(row);
+                    }
+                } catch (error) {
+                    console.error(`Error checking dishes for ${dish.name}:`, error);
+                }
+            }
+
+            // Show the results
+            allDishesContainer.style.display = 'block';
+
+            if (!dishesFound) {
+                allDishesBody.innerHTML = `
+                    <tr>
+                        <td colspan="3" class="no-dishes">You haven't purchased any dishes yet from any restaurant.</td>
+                    </tr>
+                `;
+                showAlert("No dishes found in your collection across restaurants.", "error");
+            } else {
+                showAlert("Your dish collection across restaurants loaded successfully!", "success");
+            }
+        }
+    </script>
+</body>
+
+</html>
