@@ -1,67 +1,45 @@
-const http = require("http");
-const fs = require("fs");
-const path = require("path");
+const handler = require('serve-handler');
+const http = require('http');
+const path = require('path');
+const fs = require('fs');
 
-const PORT = 3000;
-const PUBLIC_DIR = path.join(__dirname, "../public");
+// Check if there's a deployment
+const deploymentFile = path.join(__dirname, '../public/deployments.json');
+let contractAddress = null;
 
-// MIME types for common file extensions
-const MIME_TYPES = {
-  ".html": "text/html",
-  ".css": "text/css",
-  ".js": "text/javascript",
-  ".json": "application/json",
-  ".png": "image/png",
-  ".jpg": "image/jpeg",
-  ".gif": "image/gif",
-};
+if (fs.existsSync(deploymentFile)) {
+  try {
+    const deployment = JSON.parse(fs.readFileSync(deploymentFile, 'utf8'));
+    contractAddress = deployment.contractAddress;
+    console.log('Found contract deployment:', contractAddress);
+  } catch (error) {
+    console.error('Error parsing deployments.json:', error);
+  }
+}
 
-const server = http.createServer((req, res) => {
-  console.log(`${req.method} ${req.url}`);
-  
-  // Handle root path
-  let filePath = req.url === "/" 
-    ? path.join(PUBLIC_DIR, "index.html") 
-    : path.join(PUBLIC_DIR, req.url);
-  
-  // Get file extension
-  const ext = path.extname(filePath);
-  const contentType = MIME_TYPES[ext] || "text/plain";
-  
-  fs.readFile(filePath, (err, content) => {
-    if (err) {
-      if (err.code === "ENOENT") {
-        // File not found
-        console.log(`File not found: ${filePath}`);
-        res.writeHead(404);
-        res.end("File not found");
-      } else {
-        // Server error
-        console.error(err);
-        res.writeHead(500);
-        res.end(`Server Error: ${err.code}`);
-      }
-    } else {
-      // Success
-      res.writeHead(200, { "Content-Type": contentType });
-      res.end(content);
-    }
+// Create HTTP server
+const server = http.createServer((request, response) => {
+  return handler(request, response, {
+    public: path.join(__dirname, '../public')
   });
 });
 
-server.listen(PORT, () => {
-  console.log(`Server running at http://localhost:${PORT}/`);
-  
-  // Check for deployments.json
-  const deploymentPath = path.join(PUBLIC_DIR, "deployments.json");
-  if (fs.existsSync(deploymentPath)) {
-    try {
-      const deployData = JSON.parse(fs.readFileSync(deploymentPath));
-      console.log("Contract deployed at:", deployData.contractAddress);
-    } catch (err) {
-      console.log("Error reading deployment data:", err.message);
-    }
+// Select port
+const port = process.env.PORT || 3000;
+
+// Start server
+server.listen(port, () => {
+  console.log(`Frontend server running at http://localhost:${port}`);
+
+  if (contractAddress) {
+    console.log('Contract address:', contractAddress);
+    console.log(`Admin panel: http://localhost:${port}/admin.html`);
+    console.log(`User interface: http://localhost:${port}/index.html`);
+    console.log(`User profile: http://localhost:${port}/profile.html`);
   } else {
-    console.log("No deployment data found. Please deploy the contract first.");
+    console.log('No contract deployment found. Please deploy a contract first:');
+    console.log('  npm run deploy');
   }
+
+  console.log('\nPress Ctrl+C to stop the server');
 });

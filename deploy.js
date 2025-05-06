@@ -1,47 +1,27 @@
 // This is a deployment script example for Hardhat or Truffle
 // Replace this with the actual framework you're using
 
+const hre = require("hardhat");
+
 async function main() {
-    console.log("Deploying contracts...");
+    console.log("Deploying GreenRestaurant contract...");
 
-    // Deploy GreenCoin first
-    const GreenCoin = await ethers.getContractFactory("GreenCoin");
-    const greenCoin = await GreenCoin.deploy();
-    await greenCoin.waitForDeployment();
-    const greenCoinAddress = await greenCoin.getAddress();
-    console.log("GreenCoin deployed to:", greenCoinAddress);
+    // Get the contract factory
+    const GreenRestaurant = await hre.ethers.getContractFactory("GreenRestaurant");
 
-    // Set token reward rate - tokens per carbon credit per dish
-    // 10% of a token per carbon credit per dish (with 18 decimals)
-    const tokenRewardRate = ethers.parseEther("0.1"); // 0.1 = 10%
+    // Deploy the contract with a restaurant name
+    // Note: The updated contract requires a restaurant name to be passed to createDish for initialization
+    const restaurant = await GreenRestaurant.deploy();
 
-    // Deploy GreenDish with GreenCoin address
-    const GreenDish = await ethers.getContractFactory("GreenDish");
-    const greenDish = await GreenDish.deploy(
-        "Organic Salad",            // dishName
-        ethers.parseEther("0.01"),  // dishPrice (0.01 ETH)
-        100,                        // Inventory
-        80,                         // CarbonCredits (80 out of 100)
-        "Lettuce",                  // mainComponent
-        "Local Farm",               // SupplySource
-        greenCoinAddress,           // greenCoinAddress
-        tokenRewardRate             // tokenRewardRate
-    );
-    await greenDish.waitForDeployment();
-    const greenDishAddress = await greenDish.getAddress();
-    console.log("GreenDish deployed to:", greenDishAddress);
+    // Wait for deployment to finish
+    await restaurant.deployed();
 
-    // Transfer some tokens to the GreenDish contract for rewards
-    // You can adjust this amount based on your expected reward needs
-    const tokensForRewards = ethers.parseEther("10000"); // 10,000 tokens
-    await greenCoin.transfer(greenDishAddress, tokensForRewards);
-    console.log("Transferred", ethers.formatEther(tokensForRewards), "tokens to GreenDish contract");
+    console.log(`GreenRestaurant deployed to: ${restaurant.address}`);
 
-    // Save deployment info to a file for the frontend
+    // Save deployment info to a file for the frontend to use
     const fs = require("fs");
     const deployData = {
-        contractAddress: greenDishAddress,
-        tokenAddress: greenCoinAddress,
+        contractAddress: restaurant.address,
         timestamp: new Date().toISOString()
     };
 
@@ -49,12 +29,14 @@ async function main() {
         "./public/deployments.json",
         JSON.stringify(deployData, null, 2)
     );
-    console.log("Deployment information saved to public/deployments.json");
 
-    console.log("Deployment complete!");
+    console.log("Deployment info saved to public/deployments.json");
+
+    // Output verification command
+    console.log(`To verify on Etherscan, run: npx hardhat verify --network <network> ${restaurant.address}`);
 }
 
-// Execute the deployment
+// Execute deployment
 main()
     .then(() => process.exit(0))
     .catch((error) => {

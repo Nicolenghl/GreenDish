@@ -486,6 +486,41 @@
                         <div class="stat-value" id="total-carbon">0</div>
                         <div class="stat-label">Carbon Credits</div>
                     </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="token-balance">0</div>
+                        <div class="stat-label">GRC Tokens</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">
+                    <h2>Your GreenCoin Tokens (GRC)</h2>
+                </div>
+                <div class="card" style="margin-bottom: 20px; padding: 20px;">
+                    <h3>Token Balance</h3>
+                    <div style="display: flex; align-items: center; margin: 20px 0;">
+                        <div
+                            style="background-color: var(--primary); width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 20px;">
+                            <span style="color: white; font-size: 24px;">GRC</span>
+                        </div>
+                        <div>
+                            <h2 id="token-balance-large" style="margin: 0; color: var(--primary);">0.00 GRC</h2>
+                            <p>Earned from carbon credits on your dish purchases</p>
+                        </div>
+                    </div>
+                    <div class="action-buttons" style="display: flex; gap: 10px; margin-top: 10px;">
+                        <button id="refresh-tokens" class="btn">Refresh Balance</button>
+                    </div>
+                </div>
+                <p>Your GreenCoins can be used to receive discounts on future purchases or can be transferred to other
+                    users. Each carbon credit you earn through purchases contributes to your token rewards.</p>
+                <div
+                    style="background-color: rgba(39, 174, 96, 0.1); padding: 15px; border-radius: 8px; margin-top: 20px;">
+                    <h4 style="margin-top: 0; color: var(--primary);">How tokens are calculated</h4>
+                    <p>For each dish purchase, you earn tokens based on the carbon credits of the dish:</p>
+                    <p><strong>Token Reward = Dish Carbon Credits × 10%</strong></p>
+                    <p>These tokens represent your contribution to environmental sustainability.</p>
                 </div>
             </div>
 
@@ -560,8 +595,11 @@
         const totalDishesCountElem = document.getElementById('total-dishes-count');
         const totalSpentElem = document.getElementById('total-spent');
         const totalCarbonElem = document.getElementById('total-carbon');
+        const tokenBalanceElem = document.getElementById('token-balance');
+        const tokenBalanceLargeElem = document.getElementById('token-balance-large');
         const dishesBody = document.getElementById('dishes-body');
         const refreshDishesBtn = document.getElementById('refresh-dishes');
+        const refreshTokensBtn = document.getElementById('refresh-tokens');
         const statusMessages = document.getElementById('status-messages');
         const dishesLoading = document.getElementById('dishes-loading');
 
@@ -569,9 +607,12 @@
         window.addEventListener('load', async function () {
             try {
                 // Load contract ABI from artifacts
-                const response = await fetch('artifacts/contracts/GreenDish.sol/GreenDish.json');
+                const response = await fetch('artifacts/contracts/GreenRestaurant.sol/GreenRestaurant.json');
                 const contractJson = await response.json();
                 dishBookingABI = contractJson.abi;
+
+                // Auto-load from deployments.json
+                await loadRestaurantFromDeployment();
 
                 if (window.ethereum) {
                     provider = new ethers.BrowserProvider(window.ethereum);
@@ -588,6 +629,34 @@
                 showAlert("Error loading contract information. Please check the console.", "error");
             }
         });
+
+        // Add function to load restaurant from deployments.json
+        async function loadRestaurantFromDeployment() {
+            try {
+                const response = await fetch('deployments.json');
+                if (!response.ok) {
+                    console.log("Failed to load deployments.json");
+                    return false;
+                }
+
+                const deploymentData = await response.json();
+
+                if (deploymentData && deploymentData.contractAddress) {
+                    // Store the restaurant data in localStorage
+                    localStorage.setItem('restaurantDeployment', JSON.stringify({
+                        contractAddress: deploymentData.contractAddress,
+                        restaurantName: deploymentData.restaurantName || "My Green Restaurant",
+                        timestamp: deploymentData.timestamp || new Date().toISOString()
+                    }));
+
+                    console.log("Restaurant loaded from deployments.json:", deploymentData.contractAddress);
+                    return true;
+                }
+            } catch (error) {
+                console.error("Error loading from deployments.json:", error);
+            }
+            return false;
+        }
 
         // Function to check for persisted wallet connection
         async function checkPersistedConnection() {
@@ -608,6 +677,7 @@
         function init() {
             connectWalletBtn.addEventListener('click', () => connectWallet(false)); // Manual mode
             refreshDishesBtn.addEventListener('click', loadDishes);
+            refreshTokensBtn.addEventListener('click', refreshTokens);
             document.getElementById('load-all-dishes').addEventListener('click', loadAllUserDishes);
         }
 
@@ -679,102 +749,83 @@
             dishesLoading.style.display = 'block';
             dishesBody.innerHTML = '';
 
-            // Get deployed dishes from localStorage
-            const storedDishes = localStorage.getItem('deployedDishes');
-            let deployedDishes = [];
-
-            if (storedDishes) {
-                deployedDishes = JSON.parse(storedDishes);
-            } else {
-                // Try to at least check the current dish contract
-                const latestDeployment = localStorage.getItem('latestDeployment');
-                if (latestDeployment) {
-                    const deploymentData = JSON.parse(latestDeployment);
-                    const contractAddress = deploymentData.contractAddress;
-
-                    try {
-                        const dishContract = new ethers.Contract(
-                            contractAddress,
-                            dishBookingABI,
-                            signer
-                        );
-
-                        const dishName = await dishContract.dishName();
-
-                        deployedDishes = [{
-                            name: dishName,
-                            address: contractAddress
-                        }];
-                    } catch (error) {
-                        console.error("Error checking latest deployment:", error);
-                    }
-                }
-            }
-
-            if (deployedDishes.length === 0) {
+            // Get restaurant contract from localStorage
+            const storedRestaurant = localStorage.getItem('restaurantDeployment');
+            if (!storedRestaurant) {
                 dishesLoading.style.display = 'none';
-                showAlert("No dish contracts found. Please visit the dashboard to explore restaurants.", "error");
-
+                showAlert("No restaurant found. Please visit the admin panel to deploy a restaurant.", "error");
                 dishesBody.innerHTML = `
                     <tr>
-                        <td colspan="5" class="no-dishes">No dishes found in your collection. Visit the Dashboard to browse and purchase dishes.</td>
+                        <td colspan="5" class="no-dishes">No restaurants found. Visit the Admin Panel to create a restaurant first.</td>
                     </tr>
                 `;
-
-                // Reset statistics
-                totalDishesElem.textContent = "0";
-                totalDishesCountElem.textContent = "0";
-                totalSpentElem.textContent = "0.00";
-                totalCarbonElem.textContent = "0";
-
                 return;
             }
 
-            let dishRecords = [];
-            let totalRestaurantsWithDishes = 0;
-            let totalDishesCount = 0;
-            let totalEthSpent = 0;
-            let totalCarbonCredits = 0;
+            const restaurantData = JSON.parse(storedRestaurant);
+            const restaurantAddress = restaurantData.contractAddress;
 
-            // Check each dish contract for dishes
-            for (const dish of deployedDishes) {
-                try {
-                    // Create contract instance for this dish
-                    const dishContract = new ethers.Contract(
-                        dish.address,
-                        dishBookingABI,
-                        signer
-                    );
+            try {
+                // Connect to the restaurant contract
+                const restaurantContract = new ethers.Contract(
+                    restaurantAddress,
+                    dishBookingABI,
+                    signer
+                );
 
-                    // Get dishes for this dish
-                    const dishCount = await dishContract.DishesBought(userAddress);
+                // Get restaurant name
+                const restaurantName = await restaurantContract.restaurantName();
+
+                // Get total dish count
+                const dishCount = await restaurantContract.dishCount();
+
+                if (dishCount == 0) {
+                    dishesLoading.style.display = 'none';
+                    showAlert("No dishes found in this restaurant.", "error");
+                    dishesBody.innerHTML = `
+                        <tr>
+                            <td colspan="5" class="no-dishes">No dishes found in restaurant "${restaurantName}". Visit the Dashboard to browse restaurants.</td>
+                        </tr>
+                    `;
+
+                    // Reset statistics
+                    totalDishesElem.textContent = "0";
+                    totalDishesCountElem.textContent = "0";
+                    totalSpentElem.textContent = "0.00";
+                    totalCarbonElem.textContent = "0";
+                    return;
+                }
+
+                let dishRecords = [];
+                let totalRestaurantsWithDishes = 1; // We're only looking at one restaurant for now
+                let totalDishesCount = 0;
+                let totalEthSpent = 0;
+                let totalCarbonCredits = 0;
+
+                // Check each dish for purchases
+                for (let i = 0; i < dishCount; i++) {
+                    // Get dishes bought by this user for this dish
+                    const dishCount = await restaurantContract.dishesBought(i, userAddress);
 
                     if (dishCount > 0) {
-                        totalRestaurantsWithDishes++;
                         totalDishesCount += Number(dishCount);
 
                         // Get dish details
-                        const dishName = await dishContract.dishName();
-                        const dishPrice = await dishContract.dishPrice();
+                        const dishInfo = await restaurantContract.getDishInfo(i);
+                        const dishName = dishInfo[0];
+                        const dishPrice = dishInfo[1];
                         const dishPriceEth = ethers.formatEther(dishPrice);
                         const totalValue = Number(dishPriceEth) * Number(dishCount);
                         totalEthSpent += totalValue;
 
-                        // Try to get additional information if available
-                        let carbonCredits = "N/A";
-                        let carbonCreditsValue = 0;
-                        let mainComponent = "N/A";
-                        let supplySource = "N/A";
+                        // Get carbon credits
+                        const carbonCredits = dishInfo[3];
+                        const carbonCreditsValue = Number(carbonCredits) * Number(dishCount);
+                        totalCarbonCredits += carbonCreditsValue;
 
-                        try {
-                            carbonCredits = await dishContract.CarbonCredits();
-                            carbonCreditsValue = Number(carbonCredits) * Number(dishCount);
-                            totalCarbonCredits += carbonCreditsValue;
-                            mainComponent = await dishContract.mainComponent();
-                            supplySource = await dishContract.SupplySource();
-                        } catch (error) {
-                            console.log("This contract doesn't have the new properties, using defaults");
-                        }
+                        // Get other dish properties
+                        const mainComponent = dishInfo[4];
+                        const supplySource = dishInfo[5];
 
                         // Create a record for the table
                         dishRecords.push({
@@ -789,54 +840,82 @@
                             date: 'Unknown' // We don't have purchase date in the contract
                         });
                     }
-                } catch (error) {
-                    console.error(`Error checking dishes for ${dish.name}:`, error);
                 }
-            }
 
-            // Update statistics
-            totalDishesElem.textContent = totalRestaurantsWithDishes;
-            totalDishesCountElem.textContent = totalDishesCount;
-            totalSpentElem.textContent = totalEthSpent.toFixed(4);
-            totalCarbonElem.textContent = totalCarbonCredits;
+                // Update statistics
+                totalDishesElem.textContent = totalRestaurantsWithDishes;
+                totalDishesCountElem.textContent = totalDishesCount;
+                totalSpentElem.textContent = totalEthSpent.toFixed(4);
+                totalCarbonElem.textContent = totalCarbonCredits;
 
-            // Hide loading spinner
-            dishesLoading.style.display = 'none';
+                // Get token balance
+                try {
+                    const tokenBalance = await restaurantContract.balanceOf(userAddress);
+                    const formattedBalance = parseFloat(ethers.formatEther(tokenBalance)).toFixed(2);
+                    tokenBalanceElem.textContent = formattedBalance;
+                    tokenBalanceLargeElem.textContent = formattedBalance + " GRC";
+                } catch (tokenError) {
+                    console.error("Error fetching token balance:", tokenError);
 
-            // Show dishes or no dishes message
-            if (dishRecords.length > 0) {
-                // Sort by dish name
-                dishRecords.sort((a, b) => a.name.localeCompare(b.name));
+                    // Fallback to direct storage access
+                    try {
+                        const formattedBalance = parseFloat(await getTokenBalanceDirect(restaurantAddress, userAddress)).toFixed(2);
+                        tokenBalanceElem.textContent = formattedBalance;
+                        tokenBalanceLargeElem.textContent = formattedBalance + " GRC";
+                    } catch (directError) {
+                        console.error("Error with direct token balance:", directError);
+                        tokenBalanceElem.textContent = "Error";
+                        tokenBalanceLargeElem.textContent = "Error";
+                    }
+                }
 
-                // Add to table
-                dishRecords.forEach(record => {
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td>${record.name}</td>
-                        <td>${record.dishes}</td>
-                        <td>${record.price} ETH</td>
-                        <td>${record.value} ETH</td>
-                        <td>
-                            <details>
-                                <summary>View Details</summary>
-                                <p>Carbon Credits: ${record.carbonCredits} per dish (Total: ${record.totalCarbonCredits})</p>
-                                <p>Main Component: ${record.mainComponent}</p>
-                                <p>Supply Source: ${record.supplySource}</p>
-                            </details>
-                        </td>
+                // Hide loading spinner
+                dishesLoading.style.display = 'none';
+
+                // Show dishes or no dishes message
+                if (dishRecords.length > 0) {
+                    // Sort by dish name
+                    dishRecords.sort((a, b) => a.name.localeCompare(b.name));
+
+                    // Add to table
+                    dishRecords.forEach(record => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${record.name}</td>
+                            <td>${record.dishes}</td>
+                            <td>${record.price} ETH</td>
+                            <td>${record.value} ETH</td>
+                            <td>
+                                <details>
+                                    <summary>View Details</summary>
+                                    <p>Carbon Credits: ${record.carbonCredits} per dish (Total: ${record.totalCarbonCredits})</p>
+                                    <p>Main Component: ${record.mainComponent}</p>
+                                    <p>Supply Source: ${record.supplySource}</p>
+                                </details>
+                            </td>
+                        `;
+                        dishesBody.appendChild(row);
+                    });
+
+                    showAlert("Your dish collection loaded successfully!", "success");
+                } else {
+                    dishesBody.innerHTML = `
+                        <tr>
+                            <td colspan="5" class="no-dishes">You haven't purchased any dishes yet. Visit the Dashboard to browse available dishes.</td>
+                        </tr>
                     `;
-                    dishesBody.appendChild(row);
-                });
 
-                showAlert("Your dish collection loaded successfully!", "success");
-            } else {
+                    showAlert("No dishes found in your collection", "error");
+                }
+            } catch (error) {
+                console.error("Error loading dishes:", error);
+                dishesLoading.style.display = 'none';
+                showAlert("Error loading dishes: " + error.message, "error");
                 dishesBody.innerHTML = `
                     <tr>
-                        <td colspan="5" class="no-dishes">You haven't purchased any dishes yet. Visit the Dashboard to browse available dishes.</td>
+                        <td colspan="5" class="no-dishes">Error loading dishes. Please try again later.</td>
                     </tr>
                 `;
-
-                showAlert("No dishes found in your collection", "error");
             }
         }
 
@@ -866,41 +945,22 @@
             const userAddress = await signer.getAddress();
             showAlert("Loading your dish collection across all restaurants...", "success");
 
-            // Get deployed dishes from localStorage
-            const storedDishes = localStorage.getItem('deployedDishes');
-            let deployedDishes = [];
+            // Get restaurant addresses from localStorage
+            const storedRestaurants = localStorage.getItem('knownRestaurants');
+            let restaurantAddresses = [];
 
-            if (storedDishes) {
-                deployedDishes = JSON.parse(storedDishes);
+            if (storedRestaurants) {
+                restaurantAddresses = JSON.parse(storedRestaurants);
             } else {
-                // Try to at least check the current dishes contract
-                const latestDeployment = localStorage.getItem('latestDeployment');
-                if (latestDeployment) {
-                    const deploymentData = JSON.parse(latestDeployment);
-                    const contractAddress = deploymentData.contractAddress;
-
-                    try {
-                        const dishContract = new ethers.Contract(
-                            contractAddress,
-                            dishBookingABI,
-                            signer
-                        );
-
-                        const dishName = await dishContract.dishName();
-
-                        deployedDishes = [{
-                            name: dishName,
-                            address: contractAddress
-                        }];
-                    } catch (error) {
-                        console.error("Error checking latest deployment:", error);
-                    }
+                // Try to at least check the current restaurant
+                const storedRestaurant = localStorage.getItem('restaurantDeployment');
+                if (storedRestaurant) {
+                    const restaurantData = JSON.parse(storedRestaurant);
+                    restaurantAddresses = [restaurantData.contractAddress];
+                } else {
+                    showAlert("No restaurants found. Please visit the admin panel to deploy a restaurant.", "error");
+                    return;
                 }
-            }
-
-            if (deployedDishes.length === 0) {
-                showAlert("No dish contracts found. Please visit the dashboard to explore restaurants.", "error");
-                return;
             }
 
             // Container for all dishes
@@ -910,33 +970,57 @@
 
             let dishesFound = false;
 
-            // Check each dishes contract for dishes
-            for (const dish of deployedDishes) {
+            // Check each restaurant for dishes
+            for (const restaurantAddress of restaurantAddresses) {
                 try {
-                    // Create contract instance for this dishes
-                    const dishContract = new ethers.Contract(
-                        dish.address,
+                    // Create contract instance for this restaurant
+                    const restaurantContract = new ethers.Contract(
+                        restaurantAddress,
                         dishBookingABI,
                         signer
                     );
 
-                    // Get dishes for this dishes
-                    const dishCount = await dishContract.DishesBought(userAddress);
+                    // Get restaurant name
+                    let restaurantName;
+                    try {
+                        restaurantName = await restaurantContract.restaurantName();
+                    } catch (e) {
+                        restaurantName = "Unknown Restaurant";
+                    }
 
-                    if (dishCount > 0) {
-                        dishesFound = true;
+                    // Get total dish count
+                    let dishCount;
+                    try {
+                        dishCount = await restaurantContract.dishCount();
+                    } catch (e) {
+                        console.error("Error getting dish count:", e);
+                        continue; // Skip this restaurant
+                    }
 
-                        // Add to the table
-                        const row = document.createElement('tr');
-                        row.innerHTML = `
-                            <td>${dish.name || 'Unknown Dish'}</td>
-                            <td>${dishCount.toString()}</td>
-                            <td><span class="address-code">${dish.address.substring(0, 6)}...${dish.address.substring(38)}</span></td>
-                        `;
-                        allDishesBody.appendChild(row);
+                    // Loop through each dish
+                    for (let i = 0; i < dishCount; i++) {
+                        // Get dishes bought by this user for this dish
+                        const purchaseCount = await restaurantContract.dishesBought(i, userAddress);
+
+                        if (purchaseCount > 0) {
+                            dishesFound = true;
+
+                            // Get dish details
+                            const dishInfo = await restaurantContract.getDishInfo(i);
+                            const dishName = dishInfo[0];
+
+                            // Add to the table
+                            const row = document.createElement('tr');
+                            row.innerHTML = `
+                                <td>${dishName}</td>
+                                <td>${purchaseCount.toString()}</td>
+                                <td>${restaurantName} <span class="address-code">${restaurantAddress.substring(0, 6)}...${restaurantAddress.substring(38)}</span></td>
+                            `;
+                            allDishesBody.appendChild(row);
+                        }
                     }
                 } catch (error) {
-                    console.error(`Error checking dishes for ${dish.name}:`, error);
+                    console.error(`Error checking restaurant at ${restaurantAddress}:`, error);
                 }
             }
 
@@ -952,6 +1036,89 @@
                 showAlert("No dishes found in your collection across restaurants.", "error");
             } else {
                 showAlert("Your dish collection across restaurants loaded successfully!", "success");
+            }
+        }
+
+        // Function to refresh just the token balance
+        async function refreshTokens() {
+            if (!signer) {
+                showAlert("Please connect your wallet first", "error");
+                return;
+            }
+
+            try {
+                const userAddress = await signer.getAddress();
+                showAlert("Refreshing token balance...", "success");
+
+                // Get restaurant contract from localStorage
+                const storedRestaurant = localStorage.getItem('restaurantDeployment');
+                if (!storedRestaurant) {
+                    showAlert("No restaurant found. Please visit the admin panel.", "error");
+                    return;
+                }
+
+                const restaurantData = JSON.parse(storedRestaurant);
+                const contractAddress = restaurantData.contractAddress;
+
+                try {
+                    // First try the standard way (using ABI)
+                    const restaurantContract = new ethers.Contract(
+                        contractAddress,
+                        dishBookingABI,
+                        signer
+                    );
+
+                    const tokenBalance = await restaurantContract.balanceOf(userAddress);
+                    const formattedBalance = parseFloat(ethers.formatEther(tokenBalance)).toFixed(2);
+
+                    // Update both token displays
+                    tokenBalanceElem.textContent = formattedBalance;
+                    tokenBalanceLargeElem.textContent = formattedBalance + " GRC";
+                } catch (abiError) {
+                    console.error("Error using ABI for token balance:", abiError);
+
+                    // Fallback to direct storage access
+                    const formattedBalance = parseFloat(await getTokenBalanceDirect(contractAddress, userAddress)).toFixed(2);
+
+                    // Update both token displays
+                    tokenBalanceElem.textContent = formattedBalance;
+                    tokenBalanceLargeElem.textContent = formattedBalance + " GRC";
+                }
+
+                showAlert("Token balance updated successfully!", "success");
+            } catch (error) {
+                console.error("Error refreshing tokens:", error);
+                showAlert("Error refreshing token balance: " + error.message, "error");
+            }
+        }
+
+        // Custom function to check token balance directly from contract storage
+        async function getTokenBalanceDirect(contractAddress, userAddress) {
+            try {
+                console.log("Getting token balance directly from storage");
+
+                // Create a hash of the "balances" mapping with the user's address as the key
+                // This follows the Solidity storage layout where mappings use keccak256 hashing
+                const encodedKey = ethers.solidityPackedKeccak256(
+                    ["address", "uint256"],
+                    [userAddress, 0] // 0 is the slot number of the balances mapping
+                );
+
+                // Get the storage value at this location
+                const balanceHex = await provider.getStorage(contractAddress, encodedKey);
+
+                // Convert the hex value to a decimal number
+                const balance = ethers.toBigInt(balanceHex);
+
+                console.log("Raw balance from storage:", balanceHex);
+                console.log("Parsed balance:", balance.toString());
+
+                // Format it as a decimal number with the correct number of decimals (18)
+                const formattedBalance = ethers.formatEther(balance);
+                return formattedBalance;
+            } catch (error) {
+                console.error("Error getting direct token balance:", error);
+                return "0.00";
             }
         }
     </script>

@@ -1,1 +1,34 @@
-// Script to reset contract addresses in local storagedocument.addEventListener('DOMContentLoaded', async function () {    console.log('Checking contract data...');    // First check if deployments.json exists and is valid    try {        const response = await fetch('deployments.json');        if (response.ok) {            const deploymentData = await response.json();            if (deploymentData.contractAddress && deploymentData.contractAddress.startsWith('0x')) {                console.log('Found valid contract address in deployments.json:', deploymentData.contractAddress);                // Set the latest deployment in localStorage from deployments.json                localStorage.setItem('latestDeployment', JSON.stringify(deploymentData));                console.log('Contract address is valid. No need to reset localStorage.');                return; // Exit early, we don't need to reset anything            }        }    } catch (error) {        console.error('Error checking deployments.json:', error);    }    // If we get here, there's no valid deployments.json, so clear localStorage    console.log('No valid contract found. Resetting all contract data and history...');    localStorage.clear();    // Add a clear message to the user on main page    if (window.location.pathname.includes('index.html') || window.location.pathname === '/' || window.location.pathname === '') {        const transactionStatus = document.getElementById('transaction-status');        if (transactionStatus) {            const alert = document.createElement('div');            alert.classList.add('alert', 'alert-warning');            alert.innerHTML = '<strong>No dish contract found!</strong> Please visit the <a href="admin.html" style="color: #1e8449; text-decoration: underline;">Admin Panel</a> to deploy a new contract first.';            transactionStatus.innerHTML = '';            transactionStatus.appendChild(alert);        }    } else if (window.location.pathname.includes('admin.html')) {        const statusMessages = document.getElementById('status-messages');        if (statusMessages) {            const alert = document.createElement('div');            alert.classList.add('alert', 'alert-info');            alert.textContent = 'All contract data has been reset. Please deploy a new contract using the form below.';            statusMessages.innerHTML = '';            statusMessages.appendChild(alert);        }    }    console.log('All contract data has been reset. Please deploy a new contract from the Admin Panel.');}); 
+// This script helps during development to reset contract addresses in localStorage
+
+(function () {
+    // Force reset on page load for testing
+    const forceReset = true;
+
+    // Check if the URL has the reset parameter or we need to force reset
+    const urlParams = new URLSearchParams(window.location.search);
+    const resetParam = urlParams.get('reset');
+
+    if (resetParam === 'true' || forceReset) {
+        // Clear all restaurant and dish related data from localStorage
+        localStorage.removeItem('restaurantDeployment');
+        localStorage.removeItem('selectedDish');
+        localStorage.removeItem('deployedDishes');
+        localStorage.removeItem('greenDishWalletConnection');
+        localStorage.removeItem('knownRestaurants');
+        localStorage.removeItem('walletAddress');
+
+        // Remove the reset parameter from URL only if it was explicitly set
+        if (resetParam === 'true') {
+            urlParams.delete('reset');
+            const newUrl = window.location.pathname + (urlParams.toString() ? '?' + urlParams.toString() : '');
+            window.history.replaceState({}, document.title, newUrl);
+        }
+
+        console.log('Contract addresses and localStorage data have been reset');
+
+        // Only show alert if it wasn't force-reset by code
+        if (resetParam === 'true') {
+            alert('Contract data has been reset. Please refresh the page.');
+        }
+    }
+})(); 
