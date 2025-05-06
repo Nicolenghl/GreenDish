@@ -22,20 +22,20 @@ contract GreenRestaurant {
     string public constant name = "GreenCoin";
     string public constant symbol = "GRC";
     uint8 public constant decimals = 18;
-    uint256 public constant MAX_SUPPLY = 1000000 * 10 ** 18;
-    uint256 public totalSupply;
+    uint256 public constant TOTAL_SUPPLY = 1000000 * 10 ** 18; // Fixed total supply
     uint256 public constant REWARD_PERCENTAGE = 10; // 10% of carbon credits
 
     // ERC20 token mappings
     mapping(address => uint256) public balances;
     mapping(address => mapping(address => uint256)) public allowances;
 
-    // Mapping from dish ID to Dish
+    // Restaurant data mappings
     mapping(uint => Dish) public dishes;
-    // Mapping to track dishes bought by users
     mapping(uint => mapping(address => uint)) public dishesBought;
-    // Keep track of total dishes
     uint public dishCount;
+
+    // Reward pool address (contract itself)
+    address public immutable rewardPool;
 
     // Events
     event DishCreated(uint dishId, string dishName);
@@ -50,16 +50,24 @@ contract GreenRestaurant {
     );
     event TokensRewarded(address indexed buyer, uint256 amount);
 
-    // Constructor now creates the restaurant
+    // Constructor
     constructor(string memory _restaurantName) {
         restaurantName = _restaurantName;
         owner = msg.sender;
         dishCount = 0;
 
-        // Mint some initial tokens for the restaurant owner
-        totalSupply = 100000 * 10 ** 18; // 100,000 tokens
-        balances[owner] = totalSupply;
-        emit Transfer(address(0), owner, totalSupply);
+        // Set up reward pool as the contract itself
+        rewardPool = address(this);
+
+        // Create initial token distribution (70% owner, 30% reward pool)
+        uint256 ownerAmount = (TOTAL_SUPPLY * 70) / 100;
+        uint256 rewardAmount = TOTAL_SUPPLY - ownerAmount;
+
+        balances[owner] = ownerAmount;
+        balances[rewardPool] = rewardAmount;
+
+        emit Transfer(address(0), owner, ownerAmount);
+        emit Transfer(address(0), rewardPool, rewardAmount);
     }
 
     // Modifier to restrict function access to the owner
@@ -132,18 +140,22 @@ contract GreenRestaurant {
             emit DishStatusChanged(_dishId, false);
         }
 
-        // Calculate and mint reward tokens based on carbon credits
-        uint256 totalCarbonCredits = dish.carbonCredits * _numberOfDishes;
-        uint256 tokenReward = (totalCarbonCredits *
-            REWARD_PERCENTAGE *
-            10 ** 18) / 100;
+        // Award tokens based on carbon credits
+        _awardTokens(msg.sender, dish.carbonCredits * _numberOfDishes);
+    }
 
-        // Mint new tokens as rewards if not exceeding max supply
-        if (totalSupply + tokenReward <= MAX_SUPPLY) {
-            balances[msg.sender] += tokenReward;
-            totalSupply += tokenReward;
-            emit Transfer(address(0), msg.sender, tokenReward);
-            emit TokensRewarded(msg.sender, tokenReward);
+    // Helper function to award tokens based on carbon credits
+    function _awardTokens(address buyer, uint256 carbonCredits) private {
+        // Calculate reward based on carbon credits
+        uint256 tokenReward = (carbonCredits * REWARD_PERCENTAGE * 10 ** 18) /
+            100;
+
+        // Transfer tokens from reward pool if sufficient balance
+        if (balances[rewardPool] >= tokenReward) {
+            balances[rewardPool] -= tokenReward;
+            balances[buyer] += tokenReward;
+            emit Transfer(rewardPool, buyer, tokenReward);
+            emit TokensRewarded(buyer, tokenReward);
         }
     }
 
@@ -155,19 +167,19 @@ contract GreenRestaurant {
         require(_dishId < dishCount, "Dish does not exist");
         Dish storage dish = dishes[_dishId];
 
-        // Update both total and available inventory
+        // Calculate additional inventory
         uint additionalInventory = _newInventory > dish.inventory
             ? _newInventory - dish.inventory
             : 0;
-        dish.inventory = _newInventory;
 
-        // Only increase available inventory by the additional amount
+        // Update inventory
+        dish.inventory = _newInventory;
         dish.availableInventory += additionalInventory;
 
-        // Emit event for the update
+        // Emit event
         emit InventoryUpdated(_dishId, _newInventory);
 
-        // If inventory was previously 0 but now has items, set isActive to true
+        // Update dish status if needed
         if (dish.availableInventory > 0 && !dish.isActive) {
             dish.isActive = true;
             emit DishStatusChanged(_dishId, true);
@@ -179,7 +191,7 @@ contract GreenRestaurant {
         require(_dishId < dishCount, "Dish does not exist");
         Dish storage dish = dishes[_dishId];
 
-        // Only update and emit event if the status is actually changing
+        // Only update if status is changing
         if (dish.isActive != _isActive) {
             dish.isActive = _isActive;
             emit DishStatusChanged(_dishId, _isActive);
@@ -198,7 +210,7 @@ contract GreenRestaurant {
         return dishes[_dishId].availableInventory;
     }
 
-    // Get total dishes bought by a user
+    // Get dishes bought for a specific dish
     function getTotalDishesBought(
         uint _dishId,
         address _buyer
@@ -207,7 +219,7 @@ contract GreenRestaurant {
         return dishesBought[_dishId][_buyer];
     }
 
-    // Renamed function to avoid conflict
+    // Get total dishes bought across all dishes
     function getTotalDishesBoughtByUser(
         address _buyer
     ) public view returns (uint) {
@@ -218,7 +230,11 @@ contract GreenRestaurant {
         return total;
     }
 
-    // ERC20 Token functions
+    // ERC20 standard functions
+    function totalSupply() public pure returns (uint256) {
+        return TOTAL_SUPPLY;
+    }
+
     function balanceOf(address account) public view returns (uint256) {
         return balances[account];
     }
@@ -276,6 +292,12 @@ contract GreenRestaurant {
         emit Transfer(sender, recipient, amount);
     }
 
+    // Get reward pool balance
+    function getRewardPoolBalance() public view returns (uint256) {
+        return balances[rewardPool];
+    }
+
+    // Handle direct ETH transfers
     receive() external payable {}
 
     fallback() external payable {}
