@@ -4,6 +4,7 @@
   "description": "This project implements a smart contract for movie ticket booking along with a web-based UI for users to interact with the contract.",
   "main": "index.js",
   "dependencies": {
+    "@openzeppelin/contracts": "^5.3.0",
     "next": "^15.2.3",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",

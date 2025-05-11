@@ -1,0 +1,1725 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GreenDish - Sustainable Blockchain Dining</title>
+    <script src="https://cdn.jsdelivr.net/npm/web3@1.5.2/dist/web3.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/ethers@6.4.0/dist/ethers.umd.min.js"></script>
+    <script src="js/contract-config.js"></script>
+    <style>
+        :root {
+            --primary: #1e8449;
+            --primary-light: #27ae60;
+            --primary-dark: #196f3d;
+            --secondary: #3498db;
+            --dark: #2c3e50;
+            --light: #ecf0f1;
+            --danger: #e74c3c;
+            --success: #27ae60;
+            --warning: #f39c12;
+            --info: #3498db;
+            --gray: #95a5a6;
+            --card-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --hover-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+            color: var(--dark);
+            line-height: 1.6;
+        }
+
+        /* Header and Navigation */
+        .header {
+            background-color: var(--primary);
+            color: white;
+            padding: 1rem 0;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .brand {
+            font-size: 24px;
+            font-weight: bold;
+            text-decoration: none;
+            color: white;
+            display: flex;
+            align-items: center;
+        }
+
+        .brand-icon {
+            margin-right: 10px;
+            font-size: 28px;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 10px;
+        }
+
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            padding: 8px 15px;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+
+        .nav-links a:hover,
+        .nav-links a.active {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        /* Main Content */
+        .main-content {
+            padding: 0;
+        }
+
+        /* Hero Section */
+        .hero {
+            background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url('https://images.unsplash.com/photo-1512621776951-a57141f2eefd?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80');
+            background-size: cover;
+            background-position: center;
+            color: white;
+            padding: 100px 0;
+            text-align: center;
+        }
+
+        .hero-content {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .hero h1 {
+            font-size: 48px;
+            margin-bottom: 20px;
+            color: white;
+        }
+
+        .hero p {
+            font-size: 20px;
+            margin-bottom: 30px;
+        }
+
+        /* Button Styles */
+        .btn {
+            display: inline-block;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.2s;
+            text-decoration: none;
+            margin: 5px;
+        }
+
+        .btn:hover {
+            background-color: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-secondary {
+            background-color: var(--secondary);
+        }
+
+        .btn-secondary:hover {
+            background-color: #2980b9;
+        }
+
+        .btn-outline {
+            background-color: transparent;
+            border: 2px solid var(--primary);
+        }
+
+        .btn-outline:hover {
+            background-color: var(--primary);
+        }
+
+        .btn-large {
+            padding: 15px 30px;
+            font-size: 18px;
+        }
+
+        /* Features Section */
+        .features {
+            padding: 80px 0;
+            background-color: white;
+        }
+
+        .section-title {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+
+        .section-title h2 {
+            font-size: 36px;
+            color: var(--primary);
+            margin-bottom: 15px;
+        }
+
+        .section-title p {
+            color: var(--gray);
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 30px;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .feature-card {
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            padding: 30px;
+            text-align: center;
+            box-shadow: var(--card-shadow);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-10px);
+            box-shadow: var(--hover-shadow);
+        }
+
+        .feature-icon {
+            font-size: 48px;
+            color: var(--primary);
+            margin-bottom: 20px;
+        }
+
+        .feature-card h3 {
+            font-size: 22px;
+            margin-bottom: 15px;
+            color: var(--dark);
+        }
+
+        /* How It Works Section */
+        .how-it-works {
+            padding: 80px 0;
+            background-color: #f8f9fa;
+        }
+
+        .steps {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .step {
+            flex: 1;
+            min-width: 250px;
+            text-align: center;
+            padding: 30px;
+            position: relative;
+        }
+
+        .step-number {
+            background-color: var(--primary);
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: bold;
+            margin: 0 auto 20px;
+        }
+
+        .step h3 {
+            margin-bottom: 15px;
+            color: var(--dark);
+        }
+
+        /* Divider line between steps */
+        .step:not(:last-child)::after {
+            content: '';
+            position: absolute;
+            top: 54px;
+            right: 0;
+            width: 50%;
+            height: 3px;
+            background-color: var(--primary-light);
+        }
+
+        .step:not(:first-child)::before {
+            content: '';
+            position: absolute;
+            top: 54px;
+            left: 0;
+            width: 50%;
+            height: 3px;
+            background-color: var(--primary-light);
+        }
+
+        /* Tiers Section */
+        .tiers {
+            padding: 80px 0;
+            background-color: white;
+        }
+
+        .tiers-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 30px;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .tier-card {
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            padding: 40px 30px 70px;
+            text-align: center;
+            box-shadow: var(--card-shadow);
+            transition: transform 0.3s, box-shadow 0.3s;
+            flex: 1;
+            min-width: 260px;
+            max-width: 300px;
+            border-top: 5px solid var(--primary);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .tier-card:hover {
+            transform: translateY(-10px);
+            box-shadow: var(--hover-shadow);
+        }
+
+        .tier-name {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+
+        .tier-multiplier {
+            font-size: 36px;
+            color: var(--dark);
+            margin-bottom: 20px;
+        }
+
+        .tier-features {
+            list-style: none;
+            margin-bottom: 20px;
+            height: 150px;
+            overflow: visible;
+        }
+
+        .tier-features li {
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .tier-features li:last-child {
+            border-bottom: none;
+        }
+
+        .btn-primary {
+            margin-top: auto;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* CTA Section */
+        .cta {
+            background-color: var(--primary);
+            color: white;
+            padding: 80px 0;
+            text-align: center;
+        }
+
+        .cta h2 {
+            font-size: 36px;
+            margin-bottom: 20px;
+            color: white;
+        }
+
+        .cta p {
+            font-size: 18px;
+            margin-bottom: 30px;
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .cta-buttons {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        /* Footer */
+        .footer {
+            background-color: var(--dark);
+            color: white;
+            padding: 50px 0 20px;
+        }
+
+        .footer-content {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .footer-section {
+            flex: 1;
+            min-width: 250px;
+            margin-bottom: 30px;
+        }
+
+        .footer-section h3 {
+            color: white;
+            margin-bottom: 20px;
+            font-size: 18px;
+        }
+
+        .footer-links {
+            list-style: none;
+        }
+
+        .footer-links li {
+            margin-bottom: 10px;
+        }
+
+        .footer-links a {
+            color: var(--light);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .footer-links a:hover {
+            color: var(--primary-light);
+        }
+
+        .social-icons {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .social-icons a {
+            color: white;
+            font-size: 20px;
+        }
+
+        .footer-bottom {
+            max-width: 1200px;
+            margin: 30px auto 0;
+            padding: 20px 20px 0;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: center;
+        }
+
+        .token-info {
+            background-color: rgba(39, 174, 96, 0.1);
+            padding: 30px;
+            border-radius: 8px;
+            border-left: 4px solid var(--primary);
+            max-width: 1000px;
+            margin: 30px auto;
+            text-align: left;
+        }
+
+        .token-info h4 {
+            color: var(--primary);
+            margin-bottom: 15px;
+        }
+
+        /* Animation */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 992px) {
+
+            .step::after,
+            .step::before {
+                display: none;
+            }
+
+            .hero h1 {
+                font-size: 36px;
+            }
+
+            .tier-card {
+                max-width: none;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .step {
+                flex-basis: 100%;
+                margin-bottom: 40px;
+            }
+
+            .step:last-child {
+                margin-bottom: 0;
+            }
+
+            .hero h1 {
+                font-size: 28px;
+            }
+
+            .hero p {
+                font-size: 16px;
+            }
+
+            .section-title h2 {
+                font-size: 28px;
+            }
+
+            .btn-large {
+                padding: 12px 20px;
+                font-size: 16px;
+            }
+        }
+
+        /* Dishes Marketplace Styles */
+        .marketplace {
+            padding: 50px 0;
+            background-color: white;
+        }
+
+        .dishes-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 30px;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .dish-card {
+            background-color: #f9f9f9;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: var(--card-shadow);
+            transition: transform 0.3s, box-shadow 0.3s;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            border-left: 5px solid var(--primary);
+            border-top: 1px solid #eaeaea;
+            border-right: 1px solid #eaeaea;
+            border-bottom: 1px solid #eaeaea;
+        }
+
+        .dish-card:hover {
+            transform: translateY(-10px);
+            box-shadow: var(--hover-shadow);
+        }
+
+        .dish-image {
+            height: 200px;
+            background-color: var(--primary-light);
+            background-size: cover;
+            background-position: center;
+        }
+
+        .dish-content {
+            padding: 20px;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .dish-title {
+            font-size: 22px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: var(--dark);
+            margin-top: 30px;
+        }
+
+        .dish-restaurant {
+            font-size: 16px;
+            color: var(--gray);
+            margin-bottom: 15px;
+        }
+
+        .dish-details {
+            list-style: none;
+            margin-bottom: 20px;
+            flex-grow: 1;
+        }
+
+        .dish-details li {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .dish-details li:last-child {
+            border-bottom: none;
+        }
+
+        .dish-price {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--primary);
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .dish-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .dish-actions .btn {
+            flex: 1;
+        }
+
+        .quantity-input {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .quantity-input button {
+            width: 40px;
+            height: 40px;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 18px;
+            cursor: pointer;
+        }
+
+        .quantity-input input {
+            width: 60px;
+            height: 40px;
+            text-align: center;
+            border: 1px solid #ddd;
+            margin: 0 10px;
+            font-size: 18px;
+        }
+
+        /* Carbon credits badge */
+        .carbon-badge-top {
+            position: absolute;
+            top: 0;
+            right: 0;
+            background-color: var(--primary);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 0 0 0 12px;
+            font-weight: bold;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        /* Web3 connection status */
+        .wallet-section {
+            background-color: var(--light);
+            padding: 15px 20px;
+            border-radius: 8px;
+            max-width: 1200px;
+            margin: 0 auto 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .wallet-status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .status-connected {
+            background-color: var(--success);
+        }
+
+        .status-disconnected {
+            background-color: var(--danger);
+        }
+
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background-color: white;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 500px;
+            padding: 30px;
+            position: relative;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--gray);
+        }
+
+        .loader {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, .3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .search-filters {
+            max-width: 1200px;
+            margin: 0 auto 30px;
+            padding: 0 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .search-input {
+            flex: 1;
+            min-width: 200px;
+            height: 50px;
+            padding: 0 15px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 16px;
+        }
+
+        .filter-dropdown {
+            height: 50px;
+            padding: 0 15px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 16px;
+        }
+    </style>
+</head>
+
+<body>
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <a href="index.html" class="brand">
+                    <span class="brand-icon">🌱</span>GreenDish
+                </a>
+                <div class="nav-links">
+                    <a href="index.html">Home</a>
+                    <a href="marketplace.html" class="active">Marketplace</a>
+                    <a href="customer-profile.html">My Profile</a>
+                    <a href="restaurant-portal.html">Restaurant Portal</a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="main-content">
+        <!-- Hero Section -->
+        <section class="hero">
+            <div class="hero-content fade-in">
+                <h1>GreenDish Marketplace</h1>
+                <p>Browse sustainable dishes from our partner restaurants. Purchase with crypto and earn GreenCoin
+                    rewards.</p>
+                <button id="connect-wallet-btn" class="btn btn-large">Connect Wallet</button>
+            </div>
+        </section>
+
+        <!-- Marketplace Section -->
+        <section class="marketplace">
+            <div class="section-title fade-in">
+                <h2>Available Sustainable Dishes</h2>
+                <p>Each dish earns you carbon credits and GreenCoin tokens to boost your loyalty tier</p>
+            </div>
+
+            <!-- Web3 Connection Status -->
+            <div class="wallet-section fade-in">
+                <div class="wallet-status">
+                    <span class="status-indicator status-disconnected" id="wallet-indicator"></span>
+                    <span id="wallet-address">Wallet not connected</span>
+                </div>
+                <div>
+                    <button id="refresh-dishes-btn" class="btn btn-secondary">Refresh Dishes</button>
+                    <button id="hard-reset-btn" class="btn btn-secondary">Hard Reset</button>
+                    <button id="debug-connection-btn" class="btn" style="background-color: #f39c12;">Debug
+                        Connection</button>
+                </div>
+            </div>
+
+            <!-- Search and Filters -->
+            <div class="search-filters fade-in">
+                <input type="text" id="dish-search" class="search-input" placeholder="Search dishes...">
+                <select id="sort-by" class="filter-dropdown">
+                    <option value="carbon-high">Highest Carbon Credits</option>
+                    <option value="carbon-low">Lowest Carbon Credits</option>
+                    <option value="price-high">Highest Price</option>
+                    <option value="price-low">Lowest Price</option>
+                </select>
+            </div>
+
+            <!-- Dishes Grid -->
+            <div id="dishes-grid" class="dishes-grid fade-in">
+                <div id="loading-dishes" style="text-align: center; grid-column: 1 / -1; padding: 50px;">
+                    <p>Loading dishes...</p>
+                </div>
+                <!-- Dishes will be loaded dynamically here -->
+            </div>
+        </section>
+
+        <!-- Purchase Modal -->
+        <div class="modal" id="purchase-modal">
+            <div class="modal-content">
+                <span class="modal-close">&times;</span>
+                <h2 id="modal-dish-name" style="margin-bottom: 20px;">Dish Name</h2>
+                <p id="modal-restaurant" style="color: var(--gray); margin-bottom: 15px;">Restaurant Name</p>
+
+                <div style="margin-bottom: 20px;">
+                    <p style="font-weight: bold; margin-bottom: 5px;">Quantity:</p>
+                    <div class="quantity-input">
+                        <button id="decrease-quantity">-</button>
+                        <input type="number" id="dish-quantity" value="1" min="1" max="10">
+                        <button id="increase-quantity">+</button>
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 20px;">
+                    <p style="font-weight: bold; margin-bottom: 5px;">Price:</p>
+                    <p id="modal-total-price" style="font-size: 24px; color: var(--primary);">0 ETH</p>
+                </div>
+
+                <div style="margin-bottom: 20px;">
+                    <p style="font-weight: bold; margin-bottom: 5px;">Carbon Credits:</p>
+                    <p id="modal-carbon-credits">0 credits</p>
+                </div>
+
+                <div style="display: flex; gap: 10px;">
+                    <button id="confirm-purchase" class="btn" style="flex: 1;">Confirm Purchase</button>
+                    <button id="cancel-purchase" class="btn btn-secondary" style="flex: 1;">Cancel</button>
+                </div>
+
+                <div id="purchase-status" style="margin-top: 20px; text-align: center; display: none;">
+                    <p>Processing your purchase...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Restaurant Owner Warning Modal -->
+        <div class="modal" id="restaurant-warning-modal">
+            <div class="modal-content">
+                <span class="modal-close" id="warning-modal-close">&times;</span>
+                <div style="text-align: center; padding: 20px;">
+                    <div style="font-size: 48px; margin-bottom: 20px;">⚠️</div>
+                    <h2 style="color: var(--warning); margin-bottom: 20px;">Restaurant Owner Alert</h2>
+                    <p style="margin-bottom: 20px;">As the restaurant owner, you cannot purchase your own dishes.</p>
+                    <p style="margin-bottom: 30px;">Please use a different wallet address for customer purchases.</p>
+                    <button id="warning-ok-btn" class="btn btn-secondary">OK, I Understand</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Features Section -->
+        <section class="features">
+            <div class="section-title fade-in">
+                <h2>Why Choose GreenDish?</h2>
+                <p>Our blockchain-powered platform creates transparency in the food supply chain while rewarding
+                    sustainable choices.</p>
+            </div>
+            <div class="features-grid fade-in">
+                <div class="feature-card">
+                    <div class="feature-icon">🌎</div>
+                    <h3>Reduced Carbon Footprint</h3>
+                    <p>Each dish is assigned a carbon credit score based on locally-sourced ingredients and sustainable
+                        practices.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">💰</div>
+                    <h3>Tokenized Rewards</h3>
+                    <p>Earn GreenCoin (GRC) tokens for every sustainable purchase, redeemable for discounts and special
+                        offers.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🔄</div>
+                    <h3>Loyalty Tier System</h3>
+                    <p>Progress through our tier system to earn higher rewards multipliers as you accumulate carbon
+                        credits.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🔍</div>
+                    <h3>Supply Chain Transparency</h3>
+                    <p>View detailed information about the source of ingredients and production methods for each dish.
+                    </p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🏆</div>
+                    <h3>Restaurant Certification</h3>
+                    <p>Restaurants earn certification levels based on their commitment to sustainable practices.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📊</div>
+                    <h3>Impact Tracking</h3>
+                    <p>Monitor your personal environmental impact through your profile dashboard.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- How It Works Section -->
+        <section class="how-it-works">
+            <div class="section-title fade-in">
+                <h2>How It Works</h2>
+                <p>Participating in the GreenDish ecosystem is simple and rewarding</p>
+            </div>
+            <div class="steps fade-in">
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <h3>Browse & Choose</h3>
+                    <p>Explore environmentally friendly dishes from participating restaurants on our marketplace.</p>
+                </div>
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <h3>Purchase</h3>
+                    <p>Use cryptocurrency to make secure and transparent transactions.</p>
+                </div>
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <h3>Earn Rewards</h3>
+                    <p>Receive GreenCoin tokens based on the carbon credits of your purchased dishes.</p>
+                </div>
+                <div class="step">
+                    <div class="step-number">4</div>
+                    <h3>Level Up</h3>
+                    <p>Progress through loyalty tiers to increase your reward multiplier.</p>
+                </div>
+            </div>
+
+            <div class="token-info fade-in">
+                <h4>About GreenCoin (GRC) Tokens</h4>
+                <p>GreenCoin is an ERC20 token that powers the GreenDish ecosystem:</p>
+                <ul style="margin-left: 20px; margin-top: 10px;">
+                    <li>Total supply: 1,000,000 GRC</li>
+                    <li>30% allocated to ecosystem rewards pool</li>
+                    <li>Earn tokens based on carbon credits: 10% of dish carbon credits</li>
+                    <li>Higher tier levels increase your earning multiplier</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Loyalty Tiers Section -->
+        <section class="tiers">
+            <div class="section-title fade-in">
+                <h2>Loyalty Tier System</h2>
+                <p>Accumulate carbon credits to unlock higher reward multipliers</p>
+            </div>
+            <div class="tiers-container fade-in">
+                <div class="tier-card">
+                    <div class="tier-name">Bronze</div>
+                    <div class="tier-multiplier">1.0x</div>
+                    <ul class="tier-features">
+                        <li><strong>0-99</strong> Carbon Credits</li>
+                        <li>Base rewards</li>
+                        <li>Marketplace access</li>
+                        <li>Personal impact tracking</li>
+                    </ul>
+                    <a href="customer-profile.html" class="btn btn-primary">View Profile</a>
+                </div>
+                <div class="tier-card">
+                    <div class="tier-name">Silver</div>
+                    <div class="tier-multiplier">1.1x</div>
+                    <ul class="tier-features">
+                        <li><strong>100-499</strong> Carbon Credits</li>
+                        <li>10% increased rewards</li>
+                        <li>Special event access</li>
+                        <li>Seasonal promotions</li>
+                    </ul>
+                    <a href="customer-profile.html" class="btn btn-primary">View Profile</a>
+                </div>
+                <div class="tier-card">
+                    <div class="tier-name">Gold</div>
+                    <div class="tier-multiplier">1.25x</div>
+                    <ul class="tier-features">
+                        <li><strong>500-999</strong> Carbon Credits</li>
+                        <li>25% increased rewards</li>
+                        <li>Priority reservations</li>
+                        <li>Early access to new dishes</li>
+                    </ul>
+                    <a href="customer-profile.html" class="btn btn-primary">View Profile</a>
+                </div>
+                <div class="tier-card">
+                    <div class="tier-name">Platinum</div>
+                    <div class="tier-multiplier">1.5x</div>
+                    <ul class="tier-features">
+                        <li><strong>1000+</strong> Carbon Credits</li>
+                        <li>50% increased rewards</li>
+                        <li>Exclusive chef experiences</li>
+                        <li>Voting rights on new features</li>
+                    </ul>
+                    <a href="customer-profile.html" class="btn btn-primary">View Profile</a>
+                </div>
+            </div>
+        </section>
+
+        <!-- Restaurant Tiers Section -->
+        <section class="tiers" style="background-color: #f8f9fa;">
+            <div class="section-title fade-in">
+                <h2>Restaurant Certification Levels</h2>
+                <p>Restaurants earn certification based on their sustainability achievements</p>
+            </div>
+            <div class="tiers-container fade-in">
+                <div class="tier-card">
+                    <div class="tier-name">GREEN BASIC</div>
+                    <div class="tier-multiplier">1.0x</div>
+                    <ul class="tier-features">
+                        <li><strong>0-999</strong> Carbon Credits</li>
+                        <li>Basic platform listing</li>
+                        <li>Standard transaction fees</li>
+                        <li>Basic analytics dashboard</li>
+                    </ul>
+                    <a href="restaurant-portal.html" class="btn btn-primary">Restaurant Portal</a>
+                </div>
+                <div class="tier-card">
+                    <div class="tier-name">GREEN PLUS</div>
+                    <div class="tier-multiplier">1.1x</div>
+                    <ul class="tier-features">
+                        <li><strong>1000-4999</strong> Carbon Credits</li>
+                        <li>10% increased token earnings</li>
+                        <li>Featured marketplace placement</li>
+                        <li>Enhanced analytics</li>
+                    </ul>
+                    <a href="restaurant-portal.html" class="btn btn-primary">Restaurant Portal</a>
+                </div>
+                <div class="tier-card">
+                    <div class="tier-name">GREEN ELITE</div>
+                    <div class="tier-multiplier">1.25x</div>
+                    <ul class="tier-features">
+                        <li><strong>5000-9999</strong> Carbon Credits</li>
+                        <li>25% increased token earnings</li>
+                        <li>Premium marketplace placement</li>
+                        <li>Advanced carbon tracking tools</li>
+                    </ul>
+                    <a href="restaurant-portal.html" class="btn btn-primary">Restaurant Portal</a>
+                </div>
+                <div class="tier-card">
+                    <div class="tier-name">GREEN MASTER</div>
+                    <div class="tier-multiplier">1.5x</div>
+                    <ul class="tier-features">
+                        <li><strong>10000+</strong> Carbon Credits</li>
+                        <li>50% increased token earnings</li>
+                        <li>Top marketplace placement</li>
+                        <li>White-glove platform support</li>
+                    </ul>
+                    <a href="restaurant-portal.html" class="btn btn-primary">Restaurant Portal</a>
+                </div>
+            </div>
+        </section>
+
+        <!-- CTA Section -->
+        <section class="cta">
+            <div class="container">
+                <h2 class="fade-in">Ready to Make a Difference?</h2>
+                <p class="fade-in">Join thousands of environmentally conscious diners and restaurants on the GreenDish
+                    platform.</p>
+                <div class="cta-buttons fade-in">
+                    <a href="marketplace.html" class="btn btn-large">Browse Dishes</a>
+                    <a href="restaurant-portal.html" class="btn btn-secondary btn-large">Register Restaurant</a>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>GreenDish</h3>
+                    <p>Building a sustainable future for the restaurant industry through blockchain technology.</p>
+                    <div class="social-icons">
+                        <a href="#"><span>🌐</span></a>
+                        <a href="#"><span>📱</span></a>
+                        <a href="#"><span>📘</span></a>
+                        <a href="#"><span>📸</span></a>
+                    </div>
+                </div>
+                <div class="footer-section">
+                    <h3>Quick Links</h3>
+                    <ul class="footer-links">
+                        <li><a href="index.html">Home</a></li>
+                        <li><a href="marketplace.html">Marketplace</a></li>
+                        <li><a href="customer-profile.html">My Profile</a></li>
+                        <li><a href="restaurant-portal.html">Restaurant Portal</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h3>Resources</h3>
+                    <ul class="footer-links">
+                        <li><a href="#">Documentation</a></li>
+                        <li><a href="#">How It Works</a></li>
+                        <li><a href="#">Carbon Credit System</a></li>
+                        <li><a href="#">Smart Contract Audit</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h3>Contact</h3>
+                    <ul class="footer-links">
+                        <li>Email: info@greendish.io</li>
+                        <li>Support: support@greendish.io</li>
+                        <li>Partnerships: partners@greendish.io</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2023 GreenDish. All rights reserved.</p>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        // Simple script to add fade-in animations as you scroll
+        document.addEventListener('DOMContentLoaded', function () {
+            const fadeElements = document.querySelectorAll('.fade-in');
+
+            const observer = new IntersectionObserver(entries => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.style.opacity = 1;
+                        entry.target.style.transform = 'translateY(0)';
+                    }
+                });
+            }, { threshold: 0.1 });
+
+            fadeElements.forEach(element => {
+                element.style.opacity = 0;
+                element.style.transform = 'translateY(20px)';
+                element.style.transition = 'opacity 0.6s ease-out, transform 0.6s ease-out';
+                observer.observe(element);
+            });
+        });
+
+        // GreenDish Smart Contract Integration
+        let web3;
+        let accounts = [];
+        let greenDishContract;
+        let currentDishes = [];
+        let selectedDishId = null;
+
+        // Connect to Web3 provider
+        async function connectWallet() {
+            if (window.ethereum) {
+                try {
+                    // Use the shared configuration to initialize Web3
+                    if (await GreenDishConfig.initWeb3()) {
+                        // Get accounts
+                        accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                        web3 = window.web3;
+
+                        // Use the contract instance from the shared config
+                        greenDishContract = GreenDishConfig.greenDishContract;
+
+                        // Show connected status
+                        document.getElementById('wallet-indicator').classList.remove('status-disconnected');
+                        document.getElementById('wallet-indicator').classList.add('status-connected');
+                        document.getElementById('wallet-address').textContent = `${accounts[0].substring(0, 6)}...${accounts[0].substring(38)}`;
+
+                        // Load dishes
+                        await loadDishes();
+
+                        // Update connect button
+                        document.getElementById('connect-wallet-btn').textContent = 'Wallet Connected';
+                    } else {
+                        throw new Error("Failed to initialize Web3");
+                    }
+                } catch (error) {
+                    console.error("User denied account access", error);
+                    alert("Please connect your wallet to browse the marketplace");
+                }
+            } else {
+                alert("Please install MetaMask or another Web3 provider to use this marketplace");
+            }
+        }
+
+        // Load dishes from the smart contract
+        async function loadDishes() {
+            try {
+                const loadingElement = document.getElementById('loading-dishes');
+                const dishesGrid = document.getElementById('dishes-grid');
+
+                // Display loading indicator
+                if (loadingElement) loadingElement.style.display = 'block';
+                if (dishesGrid) {
+                    dishesGrid.innerHTML = '<div id="loading-dishes" style="text-align: center; grid-column: 1 / -1; padding: 50px;"><p>Loading dishes...</p></div>';
+                }
+
+                // Check if contract is properly initialized
+                if (!greenDishContract) {
+                    console.error("GreenDish contract not initialized");
+                    if (dishesGrid) {
+                        dishesGrid.innerHTML = `<div style="text-align: center; grid-column: 1 / -1; padding: 50px;">
+                            <p>Error: Contract not initialized. Please try reconnecting.</p>
+                            <button class="btn btn-secondary" onclick="connectWallet()">Reconnect Wallet</button>
+                        </div>`;
+                    }
+                    return;
+                }
+
+                // Get dish count from contract
+                const totalDishes = await greenDishContract.methods.dishCount().call();
+                console.log("Total dishes found:", totalDishes);
+
+                currentDishes = [];
+
+                if (parseInt(totalDishes) > 0) {
+                    // Load each dish info
+                    for (let i = 0; i < parseInt(totalDishes); i++) {
+                        try {
+                            console.log(`Fetching dish ID ${i}...`);
+                            const dishInfo = await greenDishContract.methods.getDishInfo(i).call();
+                            console.log(`Dish ${i} info:`, dishInfo);
+
+                            // Treat dishInfo as an array (because contract returns an array)
+                            // Only show active dishes with inventory
+                            const isActive = dishInfo[8];
+                            const inventory = parseInt(dishInfo[4]);
+
+                            if (isActive && inventory > 0) {
+                                console.log(`Dish ${i} is active and has inventory: ${inventory}`);
+                                currentDishes.push({
+                                    id: i,
+                                    name: dishInfo[2],           // dishName at index 2
+                                    restaurant: dishInfo[0],     // restaurantName at index 0
+                                    restaurantOwner: dishInfo[1], // restaurantOwner at index 1
+                                    price: web3.utils.fromWei(dishInfo[3], 'ether'), // dishPrice at index 3
+                                    inventory: inventory,        // availableInventory at index 4
+                                    carbonCredits: dishInfo[5],  // carbonCredits at index 5
+                                    mainComponent: dishInfo[6],  // mainComponent at index 6
+                                    supplySource: dishInfo[7],   // supplySource at index 7
+                                    isActive: isActive           // isActive at index 8
+                                });
+                            } else {
+                                console.log(`Dish ${i} skipped: isActive=${isActive}, inventory=${inventory}`);
+                            }
+                        } catch (dishError) {
+                            console.error(`Error loading dish ${i}:`, dishError);
+                        }
+                    }
+
+                    console.log("Processed dishes for display:", currentDishes);
+
+                    // Display dishes if any were found
+                    if (currentDishes.length > 0) {
+                        displayDishes(currentDishes);
+                    } else if (dishesGrid) {
+                        dishesGrid.innerHTML = '<div style="text-align: center; grid-column: 1 / -1; padding: 50px;"><p>No active dishes with available inventory found.</p></div>';
+                    }
+                } else if (dishesGrid) {
+                    dishesGrid.innerHTML = '<div style="text-align: center; grid-column: 1 / -1; padding: 50px;"><p>No dishes available. Please check back later.</p></div>';
+                }
+            } catch (error) {
+                console.error("Error loading dishes:", error);
+                const dishesGrid = document.getElementById('dishes-grid');
+                if (dishesGrid) {
+                    dishesGrid.innerHTML = `<div style="text-align: center; grid-column: 1 / -1; padding: 50px;">
+                        <p>Error loading dishes: ${error.message}</p>
+                        <button class="btn btn-secondary" onclick="connectWallet()">Try Reconnecting</button>
+                    </div>`;
+                }
+            }
+        }
+
+        // Display dishes in the grid
+        function displayDishes(dishes) {
+            const dishesGrid = document.getElementById('dishes-grid');
+            if (!dishesGrid) {
+                console.error("Could not find dishes-grid element");
+                return;
+            }
+
+            dishesGrid.innerHTML = '';
+
+            if (!dishes || dishes.length === 0) {
+                dishesGrid.innerHTML = '<div style="text-align: center; grid-column: 1 / -1; padding: 50px;"><p>No dishes found matching your criteria.</p></div>';
+                return;
+            }
+
+            try {
+                dishes.forEach(dish => {
+                    // Make sure all properties are defined before using them
+                    const name = dish.name || 'Unnamed Dish';
+                    const restaurant = dish.restaurant || 'Unknown Restaurant';
+                    const mainComponent = dish.mainComponent || 'Not specified';
+                    const supplySource = dish.supplySource || 'Not specified';
+                    const inventory = dish.inventory || 0;
+                    const carbonCredits = dish.carbonCredits || 0;
+                    const price = dish.price || '0';
+
+                    const dishElement = document.createElement('div');
+                    dishElement.className = 'dish-card';
+
+                    dishElement.innerHTML = `
+                        <div class="dish-content">
+                            <div class="carbon-badge-top">🌱 ${carbonCredits} credits</div>
+                            <h3 class="dish-title">${name}</h3>
+                            <p class="dish-restaurant">${restaurant}</p>
+                            <ul class="dish-details">
+                                <li><span>Main Component:</span> <span>${mainComponent}</span></li>
+                                <li><span>Supply Source:</span> <span>${supplySource}</span></li>
+                                <li><span>Available:</span> <span>${inventory} servings</span></li>
+                            </ul>
+                            <div class="dish-price">${price} ETH</div>
+                            <div class="dish-actions">
+                                <button class="btn purchase-btn" data-dish-id="${dish.id}">Purchase</button>
+                            </div>
+                        </div>
+                    `;
+                    dishesGrid.appendChild(dishElement);
+                });
+
+                // Add event listeners to purchase buttons
+                document.querySelectorAll('.purchase-btn').forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        const dishId = e.target.getAttribute('data-dish-id');
+                        openPurchaseModal(dishId);
+                    });
+                });
+            } catch (error) {
+                console.error("Error displaying dishes:", error);
+                dishesGrid.innerHTML = `<div style="text-align: center; grid-column: 1 / -1; padding: 50px;">
+                    <p>Error displaying dishes: ${error.message}</p>
+                </div>`;
+            }
+        }
+
+        // Open purchase modal
+        function openPurchaseModal(dishId) {
+            if (!accounts.length) {
+                alert("Please connect your wallet first");
+                return;
+            }
+
+            selectedDishId = dishId;
+            const dish = currentDishes.find(d => d.id == dishId);
+
+            if (dish) {
+                // Check if the current user is the restaurant owner
+                if (accounts[0].toLowerCase() === dish.restaurantOwner.toLowerCase()) {
+                    // Show restaurant owner warning modal instead
+                    document.getElementById('restaurant-warning-modal').style.display = 'flex';
+                    return;
+                }
+
+                document.getElementById('modal-dish-name').textContent = dish.name;
+                document.getElementById('modal-restaurant').textContent = dish.restaurant;
+                document.getElementById('dish-quantity').value = 1;
+                updateModalPrice();
+                document.getElementById('modal-carbon-credits').textContent = `${dish.carbonCredits} credits per dish`;
+                document.getElementById('purchase-modal').style.display = 'flex';
+            }
+        }
+
+        // Update price in modal based on quantity
+        function updateModalPrice() {
+            if (selectedDishId === null) return;
+
+            const dish = currentDishes.find(d => d.id == selectedDishId);
+            const quantity = parseInt(document.getElementById('dish-quantity').value) || 1;
+
+            if (dish) {
+                const totalPrice = (parseFloat(dish.price) * quantity).toFixed(4);
+                document.getElementById('modal-total-price').textContent = `${totalPrice} ETH`;
+            }
+        }
+
+        // Handle purchase confirmation
+        async function confirmPurchase() {
+            if (selectedDishId === null || !accounts.length) return;
+
+            const dish = currentDishes.find(d => d.id == selectedDishId);
+            const quantity = parseInt(document.getElementById('dish-quantity').value) || 1;
+
+            if (dish && quantity > 0) {
+                try {
+                    // Check if the current user is the restaurant owner
+                    if (accounts[0].toLowerCase() === dish.restaurantOwner.toLowerCase()) {
+                        // Show restaurant owner warning modal instead of attempting purchase
+                        document.getElementById('purchase-modal').style.display = 'none';
+                        document.getElementById('restaurant-warning-modal').style.display = 'flex';
+                        return;
+                    }
+
+                    // Show processing status
+                    document.getElementById('purchase-status').style.display = 'block';
+                    document.getElementById('purchase-status').innerHTML = '<p>Processing your purchase... <span class="loader"></span></p>';
+
+                    // Calculate total price in wei
+                    const totalPriceWei = web3.utils.toWei((parseFloat(dish.price) * quantity).toString(), 'ether');
+
+                    // Call contract method
+                    await greenDishContract.methods.purchaseDish(selectedDishId, quantity).send({
+                        from: accounts[0],
+                        value: totalPriceWei,
+                        gas: 300000 // Gas limit
+                    });
+
+                    // Purchase successful
+                    document.getElementById('purchase-status').innerHTML = '<p style="color: var(--success);">Purchase successful! Redirecting to your profile...</p>';
+
+                    // Reload dishes after purchase
+                    setTimeout(() => {
+                        window.location.href = 'customer-profile.html';
+                    }, 3000);
+
+                } catch (error) {
+                    console.error("Error making purchase:", error);
+
+                    // Check if this is a restaurant owner error
+                    if (error.message.includes("Restaurant owner cannot purchase their own dish")) {
+                        // Close purchase modal
+                        document.getElementById('purchase-modal').style.display = 'none';
+                        // Show warning modal
+                        document.getElementById('restaurant-warning-modal').style.display = 'flex';
+                    } else {
+                        // Show general error
+                        document.getElementById('purchase-status').innerHTML = `<p style="color: var(--danger);">Error: ${error.message}</p>`;
+                    }
+                }
+            }
+        }
+
+        // Initialize when document is loaded
+        document.addEventListener('DOMContentLoaded', function () {
+            // Connect wallet button
+            document.getElementById('connect-wallet-btn').addEventListener('click', connectWallet);
+
+            // Refresh dishes button
+            document.getElementById('refresh-dishes-btn').addEventListener('click', loadDishes);
+
+            // Hard reset button
+            document.getElementById('hard-reset-btn').addEventListener('click', hardReset);
+
+            // Debug connection button
+            document.getElementById('debug-connection-btn').addEventListener('click', debugConnection);
+
+            // Modal close button
+            document.querySelector('.modal-close').addEventListener('click', () => {
+                document.getElementById('purchase-modal').style.display = 'none';
+            });
+
+            // Warning modal close button
+            document.getElementById('warning-modal-close').addEventListener('click', () => {
+                document.getElementById('restaurant-warning-modal').style.display = 'none';
+            });
+
+            // Warning modal OK button
+            document.getElementById('warning-ok-btn').addEventListener('click', () => {
+                document.getElementById('restaurant-warning-modal').style.display = 'none';
+            });
+
+            // Quantity buttons
+            document.getElementById('increase-quantity').addEventListener('click', () => {
+                const input = document.getElementById('dish-quantity');
+                const currentValue = parseInt(input.value) || 0;
+                input.value = Math.min(currentValue + 1, 10); // Max 10 dishes
+                updateModalPrice();
+            });
+
+            document.getElementById('decrease-quantity').addEventListener('click', () => {
+                const input = document.getElementById('dish-quantity');
+                const currentValue = parseInt(input.value) || 0;
+                input.value = Math.max(currentValue - 1, 1); // Min 1 dish
+                updateModalPrice();
+            });
+
+            // Quantity input change
+            document.getElementById('dish-quantity').addEventListener('change', updateModalPrice);
+
+            // Purchase confirmation
+            document.getElementById('confirm-purchase').addEventListener('click', confirmPurchase);
+
+            // Cancel purchase
+            document.getElementById('cancel-purchase').addEventListener('click', () => {
+                document.getElementById('purchase-modal').style.display = 'none';
+            });
+
+            // Search and filtering
+            document.getElementById('dish-search').addEventListener('input', filterDishes);
+            document.getElementById('sort-by').addEventListener('change', filterDishes);
+
+            // Attempt to connect wallet if already authorized
+            if (window.ethereum) {
+                window.ethereum.request({ method: 'eth_accounts' }).then(accts => {
+                    if (accts.length > 0) {
+                        connectWallet();
+                    }
+                });
+            }
+        });
+
+        // Hard reset function to clear cache and reinitialize Web3
+        async function hardReset() {
+            try {
+                // Clear localStorage
+                localStorage.clear();
+
+                // Reset the contract config
+                if (typeof GreenDishConfig !== 'undefined' && GreenDishConfig.resetContractData) {
+                    await GreenDishConfig.resetContractData();
+                }
+
+                // Reset the web3 connection
+                if (window.ethereum) {
+                    web3 = null;
+                    greenDishContract = null;
+                    accounts = [];
+
+                    // Show disconnected status
+                    document.getElementById('wallet-indicator').classList.remove('status-connected');
+                    document.getElementById('wallet-indicator').classList.add('status-disconnected');
+                    document.getElementById('wallet-address').textContent = 'Wallet not connected';
+
+                    // Update connect button
+                    document.getElementById('connect-wallet-btn').textContent = 'Connect Wallet';
+
+                    // Show reset message
+                    alert('Connection reset. Please reconnect your wallet.');
+                }
+            } catch (error) {
+                console.error("Error during hard reset:", error);
+                alert(`Reset failed: ${error.message}`);
+            }
+        }
+
+        // Debug connection function
+        async function debugConnection() {
+            try {
+                const resultsDiv = document.getElementById('dishes-grid');
+                resultsDiv.innerHTML = '<div style="text-align: left; grid-column: 1 / -1; padding: 20px; background: #f8f9fa; border-radius: 8px;"><h3>Debug Information</h3><pre id="debug-info" style="overflow: auto; background: #eee; padding: 10px; max-height: 400px;"></pre></div>';
+                const debugInfo = document.getElementById('debug-info');
+
+                let info = "## Connection Status ##\n";
+
+                // Check if Web3 is available
+                info += `\nWeb3 Available: ${typeof web3 !== 'undefined'}\n`;
+
+                // Check if ethereum provider is available
+                info += `Ethereum Provider: ${typeof window.ethereum !== 'undefined'}\n`;
+
+                // Check network connection
+                if (typeof web3 !== 'undefined') {
+                    try {
+                        const networkId = await web3.eth.net.getId();
+                        const networkType = await web3.eth.net.getNetworkType();
+                        info += `Network ID: ${networkId}\n`;
+                        info += `Network Type: ${networkType}\n`;
+                    } catch (e) {
+                        info += `Network Error: ${e.message}\n`;
+                    }
+                }
+
+                // Check accounts
+                info += `\n## Account Status ##\n`;
+                info += `Connected Accounts: ${accounts.length}\n`;
+                if (accounts.length > 0) {
+                    info += `Current Account: ${accounts[0]}\n`;
+
+                    try {
+                        const balance = await web3.eth.getBalance(accounts[0]);
+                        info += `Balance: ${web3.utils.fromWei(balance, 'ether')} ETH\n`;
+                    } catch (e) {
+                        info += `Balance Error: ${e.message}\n`;
+                    }
+                }
+
+                // Check contract info
+                info += `\n## Contract Status ##\n`;
+
+                try {
+                    if (typeof GreenDishConfig !== 'undefined') {
+                        info += `GreenDish Address: ${GreenDishConfig.addresses.GreenDish}\n`;
+                        info += `GreenCoin Address: ${GreenDishConfig.addresses.GreenCoin}\n`;
+
+                        // Check contract existence
+                        if (typeof web3 !== 'undefined') {
+                            const greenDishCode = await web3.eth.getCode(GreenDishConfig.addresses.GreenDish);
+                            const hasCode = greenDishCode !== '0x' && greenDishCode !== '0x0';
+                            info += `Contract exists at address: ${hasCode}\n`;
+
+                            // Test contract call
+                            if (greenDishContract) {
+                                try {
+                                    const dishCount = await greenDishContract.methods.dishCount().call();
+                                    info += `Dish Count from Contract: ${dishCount}\n`;
+
+                                    // Try to get info for first dish if available
+                                    if (parseInt(dishCount) > 0) {
+                                        try {
+                                            const dishInfo = await greenDishContract.methods.getDishInfo(0).call();
+                                            info += `First Dish Info: \n`;
+                                            info += `  Name: ${dishInfo[2]}\n`;
+                                            info += `  Restaurant: ${dishInfo[0]}\n`;
+                                            info += `  Is Active: ${dishInfo[8]}\n`;
+                                        } catch (e) {
+                                            info += `Dish Info Error: ${e.message}\n`;
+                                        }
+                                    }
+                                } catch (e) {
+                                    info += `Contract Call Error: ${e.message}\n`;
+                                }
+                            } else {
+                                info += `Contract instance not created\n`;
+                            }
+                        }
+                    } else {
+                        info += `GreenDishConfig not available\n`;
+                    }
+                } catch (e) {
+                    info += `Contract Check Error: ${e.message}\n`;
+                }
+
+                // Check for network errors
+                try {
+                    await web3.eth.net.isListening();
+                    info += `\nNetwork Connection: OK\n`;
+                } catch (e) {
+                    info += `\nNetwork Connection Error: ${e.message}\n`;
+                    info += `This might indicate the blockchain node is not running or accessible.\n`;
+                }
+
+                debugInfo.textContent = info;
+
+            } catch (error) {
+                console.error("Debug error:", error);
+                const resultsDiv = document.getElementById('dishes-grid');
+                if (resultsDiv) {
+                    resultsDiv.innerHTML = `<div style="text-align: center; grid-column: 1 / -1; padding: 50px;">
+                        <p>Debug failed: ${error.message}</p>
+                    </div>`;
+                }
+            }
+        }
+
+        // Filter and sort dishes
+        function filterDishes() {
+            const searchTerm = document.getElementById('dish-search').value.toLowerCase();
+            const sortBy = document.getElementById('sort-by').value;
+
+            // Filter by search term
+            let filteredDishes = currentDishes.filter(dish =>
+                dish.name.toLowerCase().includes(searchTerm) ||
+                dish.restaurant.toLowerCase().includes(searchTerm) ||
+                dish.mainComponent.toLowerCase().includes(searchTerm) ||
+                dish.supplySource.toLowerCase().includes(searchTerm)
+            );
+
+            // Sort dishes
+            switch (sortBy) {
+                case 'carbon-high':
+                    filteredDishes.sort((a, b) => b.carbonCredits - a.carbonCredits);
+                    break;
+                case 'carbon-low':
+                    filteredDishes.sort((a, b) => a.carbonCredits - b.carbonCredits);
+                    break;
+                case 'price-high':
+                    filteredDishes.sort((a, b) => parseFloat(b.price) - parseFloat(a.price));
+                    break;
+                case 'price-low':
+                    filteredDishes.sort((a, b) => parseFloat(a.price) - parseFloat(b.price));
+                    break;
+            }
+
+            // Display filtered dishes
+            displayDishes(filteredDishes);
+        }
+    </script>
+</body>
+
+</html>

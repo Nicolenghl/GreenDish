@@ -1,6 +1,7 @@
 {
   "greenCoinAddress": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
   "greenDishAddress": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
-  "timestamp": "2025-05-11T11:58:10.166Z",
-  "restaurantName": "Green Eatery"
+  "networkName": "localhost",
+  "networkId": "31337",
+  "deploymentTime": "2025-05-11T11:58:10.166Z"
 }

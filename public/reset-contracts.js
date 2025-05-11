@@ -2,7 +2,7 @@
 
 (function () {
     // Force reset on page load for testing
-    const forceReset = true;
+    const forceReset = false;
 
     // Check if the URL has the reset parameter or we need to force reset
     const urlParams = new URLSearchParams(window.location.search);

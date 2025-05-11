@@ -1,188 +1,181 @@
-# GreenDish DApp Deployment Guide
+# GreenDish Platform Deployment Guide
 
-This guide will walk you through the deployment of the GreenDish decentralized application (DApp) with GreenCoin token rewards.
-
-## Project Structure
-
-```
-GreenDish/
-├── contracts/
-│   ├── GreenDish.sol        # Main contract for restaurant dishes
-│   └── token.sol            # GreenCoin ERC20 token contract
-├── public/
-│   ├── index.html           # Main dashboard page
-│   ├── profile.html         # User profile page
-│   ├── admin.html           # Admin dashboard
-│   ├── token-init.js        # Token initialization script
-│   └── reset-contracts.js   # Helper script for resetting contracts
-├── artifacts/               # Compiled contract artifacts
-├── deploy.js                # Deployment script for both contracts
-└── DEPLOYMENT.md            # This deployment guide
-```
+This guide will walk you through the process of deploying the GreenDish platform, including both the smart contracts and the frontend web application.
 
 ## Prerequisites
 
-- [Node.js](https://nodejs.org/) (v14+)
-- [npm](https://www.npmjs.com/) or [yarn](https://yarnpkg.com/)
-- [MetaMask](https://metamask.io/) browser extension
-- [Hardhat](https://hardhat.org/) or [Truffle](https://www.trufflesuite.com/)
-- Test ETH for deployment (for Sepolia testnet: [Sepolia Faucet](https://sepoliafaucet.com/))
+Before starting the deployment process, ensure you have the following:
 
-## Step-by-Step Deployment Guide
+1. Node.js (v16.x or later) and npm installed
+2. MetaMask extension installed in your browser
+3. Sufficient ETH in your wallet for deployment gas fees
+4. If deploying to a testnet:
+   - A testnet (Sepolia) RPC URL (from Infura, Alchemy, etc.)
+   - Testnet ETH in your wallet
+   - (Optional) Etherscan API key for contract verification
 
-### 1. Clone and Set Up the Project
+## Step 1: Set Up Your Environment
 
-```bash
-# Clone the repository (if applicable)
-git clone <repository-url>
-cd GreenDish
-
-# Install dependencies
-npm install
-```
-
-### 2. Compile Smart Contracts
-
-```bash
-# If using Hardhat
-npx hardhat compile
-
-# If using Truffle
-truffle compile
-```
-
-This will create the `artifacts` directory with compiled contract files.
-
-### 3. Deploy the Contracts
-
-You have two options for deployment:
-
-#### Option A: Using the Deployment Script
-
-1. Update the `deploy.js` script with your desired configuration:
-   - Set the dish name, price, inventory, carbon credits
-   - Adjust the token reward rate (currently set to 10%)
-
-2. Run the deployment script:
+1. Clone the GreenDish repository and navigate to the project directory:
    ```bash
-   # If using Hardhat
-   npx hardhat run deploy.js --network sepolia
-
-   # If using Truffle
-   truffle migrate --network sepolia
+   git clone <repository-url>
+   cd greendish-platform
    ```
 
-3. The script will:
-   - Deploy the GreenCoin token contract first
-   - Deploy the GreenDish contract
-   - Connect the GreenDish contract to the GreenCoin contract
-   - Transfer initial tokens to the GreenDish contract for rewards
-
-4. Save the deployed contract addresses for the frontend.
-
-#### Option B: Deploy via the Admin Dashboard
-
-1. Start the local development server:
+2. Install dependencies:
    ```bash
-   # If using a development server like lite-server
-   npm run dev
+   npm install
    ```
 
-2. Navigate to `http://localhost:3000/admin.html`
+3. Create a `.env` file in the project root with your configuration:
+   ```
+   # Network settings
+   SEPOLIA_RPC_URL=https://sepolia.infura.io/v3/YOUR_INFURA_KEY
+   ETHERSCAN_API_KEY=YOUR_ETHERSCAN_API_KEY
+   
+   # Wallet settings - BE CAREFUL WITH THIS! Never share your private key!
+   PRIVATE_KEY=YOUR_WALLET_PRIVATE_KEY
+   
+   # Frontend settings
+   FRONTEND_PORT=3000
+   ```
 
-3. Connect your MetaMask wallet.
+4. Make sure the `public/js` directory exists:
+   ```bash
+   mkdir -p public/js
+   ```
 
-4. Use the admin interface to:
-   - Initialize the GreenCoin token
-   - Create a new dish with carbon credits and token reward settings
+## Step 2: Deploy Smart Contracts
 
-### 4. Configure the Frontend
+The GreenDish platform consists of two main contracts:
+- `GreenCoin.sol`: The ERC20 token used for rewards
+- `GreenDish.sol`: The main contract that handles restaurants, dishes, and loyalty program
 
-1. If you used Option A (deployment script), update the contract addresses in the frontend:
-   - Create a file named `deployments.json` in the public directory:
-     ```json
-     {
-       "contractAddress": "YOUR_GREENDISH_CONTRACT_ADDRESS",
-       "tokenAddress": "YOUR_GREENCOIN_CONTRACT_ADDRESS"
-     }
-     ```
+### Deploy to a Local Network (for testing)
 
-2. If using Option B, the addresses will be automatically saved in localStorage.
+1. Start a local Hardhat node:
+   ```bash
+   npx hardhat node
+   ```
 
-### 5. Launch the Application
+2. Deploy the contracts to the local network:
+   ```bash
+   npx hardhat run scripts/deploy.js --network localhost
+   ```
 
-```bash
-# Start the local server
-npm run dev
-```
+### Deploy to Sepolia Testnet
 
-Navigate to `http://localhost:3000` in your browser.
+1. Deploy the contracts to Sepolia:
+   ```bash
+   npx hardhat run scripts/deploy.js --network sepolia
+   ```
 
-## Using the Application
+The deployment script will:
+1. Deploy the GreenCoin token contract
+2. Deploy the GreenDish main contract with the GreenCoin address
+3. Allocate 30% of tokens to the GreenDish contract for rewards
+4. Create an initial restaurant and dish
+5. Save the deployment information to:
+   - `deployment-info.json` (detailed deployment info)
+   - `public/deployments.json` (frontend deployment info)
+   - Update `public/js/contract-config.js` with the new addresses
 
-### As a Restaurant Owner (Admin)
+## Step 3: Update Contract Addresses
 
-1. Navigate to `/admin.html`
-2. Connect your MetaMask wallet
-3. Initialize the GreenCoin token (if not already deployed)
-4. Create a new dish by filling out the form with:
-   - Dish name, price, and inventory
-   - Carbon credits (1-100)
-   - Main component and supply source
-
-### As a Customer
-
-1. Navigate to the main dashboard
-2. Connect your MetaMask wallet
-3. Browse available dishes
-4. Purchase dishes to earn carbon credits and GreenCoin tokens
-5. View your collection and rewards in the profile page
-
-## Contract Interaction
-
-### GreenDish Contract Functions
-
-- `purchaseDish(uint _numberOfDishes)` - Buy dishes and earn tokens
-- `updateInventory(uint _newInventory)` - Update dish inventory (owner only)
-- `setDishStatus(bool _isActive)` - Enable/disable a dish (owner only)
-
-### GreenCoin Token Functions
-
-- `transfer(address recipient, uint256 amount)` - Transfer tokens to another address
-- `balanceOf(address account)` - Check token balance
-- `approve(address spender, uint256 amount)` - Approve another address to spend tokens
-
-## Token Reward System
-
-The token reward is calculated as:
-```
-Reward = numberOfDishes * carbonCredits * tokenRewardRate
-```
-
-Where:
-- `tokenRewardRate` is set to 0.1 (10% of a token per carbon credit)
-
-## Testnet Deployment
-
-For production-like testing, deploy to a testnet:
+If you need to manually update the contract addresses in the frontend files, you can use the provided script:
 
 ```bash
-# Deploy to Sepolia testnet
-npx hardhat run deploy.js --network sepolia
+node scripts/update-contract-addresses.js <greenCoinAddress> <greenDishAddress>
 ```
 
-Make sure your `hardhat.config.js` or `truffle-config.js` includes the Sepolia network configuration.
+For example:
+```bash
+node scripts/update-contract-addresses.js 0xabcdef1234567890abcdef1234567890abcdef12 0x1234567890abcdef1234567890abcdef12345678
+```
+
+This will update the addresses in:
+- `public/deployments.json`
+- `public/js/contract-config.js`
+
+## Step 4: Start the Frontend
+
+1. Start the frontend server:
+   ```bash
+   npm run start
+   ```
+
+2. Open your browser and navigate to `http://localhost:3000` (or the port you specified in the `.env` file)
+
+## Step 5: Verify Contracts (Optional)
+
+If you deployed to a public testnet or mainnet, it's a good practice to verify your contracts on Etherscan:
+
+```bash
+npx hardhat verify --network sepolia <greenCoinAddress>
+npx hardhat verify --network sepolia <greenDishAddress> <greenCoinAddress>
+```
 
 ## Troubleshooting
 
-- **MetaMask Connection Issues**: Ensure you're on the correct network (e.g., Sepolia testnet)
-- **Transaction Failing**: Check you have sufficient ETH for gas
-- **Contract Not Found**: Verify the contract addresses are correctly set
-- **Token Rewards Not Showing**: Ensure the GreenCoin token is properly initialized and the GreenDish contract has sufficient tokens
+### Contract Connection Issues
 
-## Next Steps
+If the frontend is having trouble connecting to your contracts:
 
-- Add more restaurant dishes to the platform
-- Implement token staking for additional benefits
-- Create a marketplace for using GreenCoins to purchase real goods
-- Add more detailed analytics for carbon credit impact 
+1. Check that the contract addresses in `public/deployments.json` and `public/js/contract-config.js` are correct
+2. Ensure you're connected to the correct network in MetaMask
+3. Verify that the contracts were deployed successfully
+
+### MetaMask Issues
+
+If MetaMask isn't connecting or transactions are failing:
+
+1. Make sure you have the correct network selected in MetaMask
+2. Check that you have sufficient ETH for gas fees
+3. Try resetting your MetaMask account (Settings > Advanced > Reset Account)
+
+### Frontend Issues
+
+If the frontend isn't displaying correctly:
+
+1. Check the browser console for errors
+2. Ensure all HTML files include the shared contract configuration:
+   ```html
+   <script src="js/contract-config.js"></script>
+   ```
+
+## Deployment Configuration
+
+The smart contract deployment logic uses the following files:
+
+1. `hardhat.config.js`: Network configuration
+2. `scripts/deploy.js`: Contract deployment logic
+3. `scripts/update-contract-addresses.js`: Updates frontend files with contract addresses
+
+The key frontend files for contract integration are:
+
+1. `public/js/contract-config.js`: Shared contract configuration
+2. `public/deployments.json`: Contract addresses for the frontend
+3. HTML files: `marketplace.html`, `customer-profile.html`, `restaurant-portal.html`
+
+## Contract Address Configuration JSON Format
+
+The `public/deployments.json` file should have the following format:
+
+```json
+{
+  "greenCoinAddress": "0xabcdef1234567890abcdef1234567890abcdef12",
+  "greenDishAddress": "0x1234567890abcdef1234567890abcdef12345678",
+  "timestamp": "2023-05-06T07:17:57.737Z",
+  "restaurantName": "Green Eatery"
+}
+```
+
+## Next Steps After Deployment
+
+After successful deployment:
+
+1. Connect your MetaMask wallet to the application
+2. Create more restaurants and dishes
+3. Test the purchase functionality
+4. Verify the loyalty tier system is working correctly
+5. Check token rewards and balances 

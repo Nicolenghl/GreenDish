@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-contract GreenRestaurant {
+contract GreenDish {
     // Token Variables
     string public constant name = "GreenCoin";
     string public constant symbol = "GRC";
