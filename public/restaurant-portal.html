@@ -628,20 +628,20 @@
 
         <div class="stats-container">
             <div class="stat-card">
-                <div class="stat-title">Total Dishes</div>
-                <div id="total-dishes" class="stat-value">0</div>
+                <div class="stat-title">Registered Dishes</div>
+                <div id="registered-dishes" class="stat-value">0</div>
             </div>
             <div class="stat-card">
-                <div class="stat-title">Active Dishes</div>
-                <div id="active-dishes" class="stat-value">0</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-title">Total Inventory</div>
+                <div class="stat-title">Current Inventory</div>
                 <div id="total-inventory" class="stat-value">0</div>
+                <div class="stat-subtitle" style="font-size: 12px; color: var(--gray); margin-top: 5px;">Currently
+                    available</div>
             </div>
             <div class="stat-card">
-                <div class="stat-title">Sold Items</div>
+                <div class="stat-title">Inventory Reduction</div>
                 <div id="sold-items" class="stat-value">0</div>
+                <div class="stat-subtitle" style="font-size: 12px; color: var(--gray); margin-top: 5px;">Since last
+                    inventory reset</div>
             </div>
             <div class="stat-card"
                 style="background-color: rgba(39, 174, 96, 0.1); border-left: 4px solid var(--primary);">
@@ -649,6 +649,9 @@
                 <div id="token-balance" class="stat-value">0</div>
             </div>
         </div>
+
+        <!-- Hidden element for backward compatibility -->
+        <div id="active-dishes" style="display:none">0</div>
 
         <!-- Carbon Credits Report Section -->
         <div class="card">
@@ -669,18 +672,25 @@
                     <div id="total-carbon-credits" class="stat-value">0</div>
                 </div>
                 <div class="stat-card">
+                    <div class="stat-title">Restaurant Tier</div>
+                    <div id="restaurant-tier" class="stat-value">Basic</div>
+                </div>
+                <div class="stat-card">
                     <div class="stat-title">Dishes Sold</div>
                     <div id="total-dishes-sold" class="stat-value">0</div>
+                    <div class="stat-subtitle" style="font-size: 12px; color: var(--gray); margin-top: 5px;">Tracked
+                        from transactions</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-title">Average Credits Per Sale</div>
-                    <div id="avg-carbon-credits" class="stat-value">0</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-title">Unique Customers</div>
-                    <div id="unique-customers" class="stat-value">0</div>
+                    <div class="stat-title">Actual Sales</div>
+                    <div id="actual-sales" class="stat-value">0</div>
+                    <div class="stat-subtitle" style="font-size: 12px; color: var(--gray); margin-top: 5px;">From
+                        customer purchases only</div>
                 </div>
             </div>
+
+            <!-- Add back average credits per sale element that's referenced in JS -->
+            <div id="avg-carbon-credits" style="display:none"></div>
 
             <div id="carbon-credits-chart"
                 style="width: 100%; height: 300px; background-color: #f8f9fa; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
@@ -828,7 +838,9 @@
         const deployContractBtn = document.getElementById('deploy-contract');
         const statusMessages = document.getElementById('status-messages');
         const dishList = document.getElementById('dish-list');
-        const totalDishesElement = document.getElementById('total-dishes');
+        const registeredDishesElement = document.getElementById('registered-dishes');
+        // Keep total-dishes reference for backward compatibility
+        const totalDishesElement = registeredDishesElement;
         const activeDishesElement = document.getElementById('active-dishes');
         const totalInventoryElement = document.getElementById('total-inventory');
         const soldItemsElement = document.getElementById('sold-items');
@@ -849,6 +861,8 @@
         let greenDishContract;
         let deployedDishes = [];
         let purchaseEvents = [];
+        let restaurantTier = 0;
+        let actualSalesCount = 0;
 
         // Initialize
         window.addEventListener('load', init);
@@ -1018,6 +1032,11 @@
 
                 // Load restaurant loyalty tier info
                 loadRestaurantTierInfo();
+
+                // Count actual sales if the element exists
+                if (document.getElementById('actual-sales')) {
+                    await countActualSales();
+                }
 
                 // Reset dishes array
                 deployedDishes = [];
@@ -1203,22 +1222,41 @@
 
             // Calculate inventory and sold items
             deployedDishes.forEach(dish => {
-                // For total inventory, use the initial inventory (totalSeats) if available
-                // If not available, fall back to current available inventory
-                const initialInventory = parseInt(dish.totalSeats) || parseInt(dish.availableInventory) || 0;
+                // For current inventory, just use the available inventory
                 const availableInventory = parseInt(dish.availableInventory) || 0;
+                // For computing reduction, use the initial inventory (totalSeats) if available
+                const initialInventory = parseInt(dish.totalSeats) || parseInt(dish.availableInventory) || 0;
 
-                totalInventory += initialInventory;
+                // Total inventory is now simply the sum of all currently available inventory
+                totalInventory += availableInventory;
+                // Reduction is still computed from initial minus current
                 soldItems += (initialInventory - availableInventory);
 
-                console.log(`Dish ${dish.name}: Total=${initialInventory}, Available=${availableInventory}, Sold=${initialInventory - availableInventory}`);
+                console.log(`Dish ${dish.name}: Initial=${initialInventory}, Available=${availableInventory}, Inventory Reduction=${initialInventory - availableInventory}`);
             });
 
             // Update UI
-            totalDishesElement.textContent = totalDishes;
-            activeDishesElement.textContent = activeDishes;
-            totalInventoryElement.textContent = totalInventory;
-            soldItemsElement.textContent = soldItems;
+            if (totalDishesElement) {
+                totalDishesElement.textContent = totalDishes;
+            }
+
+            if (activeDishesElement) {
+                activeDishesElement.textContent = activeDishes;
+            }
+
+            if (totalInventoryElement) {
+                totalInventoryElement.textContent = totalInventory;
+            }
+
+            if (soldItemsElement) {
+                soldItemsElement.textContent = soldItems;
+            }
+
+            // Update the actual sales display if available
+            const actualSalesElement = document.getElementById('actual-sales');
+            if (actualSalesElement) {
+                actualSalesElement.textContent = actualSalesCount || "0";
+            }
         }
 
         // Render dish list
@@ -1280,13 +1318,16 @@
                                 <span class="dish-spec-value">${availableInventory}</span>
                             </div>
                             <div class="dish-spec">
-                                <span class="dish-spec-title">Sold</span>
+                                <span class="dish-spec-title">Inventory Reduction</span>
+                                <span class="dish-spec-title" style="color: var(--gray); font-size: 10px; text-transform: none;">
+                                    (since last reset)
+                                </span>
                                 <span class="dish-spec-value">${soldCount}</span>
                             </div>
                         </div>
                         <div style="margin-top: 10px;">
                             <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
-                                <span>Consumption Rate</span>
+                                <span>Reduction Rate</span>
                                 <span>${Math.round(consumptionPercentage)}%</span>
                             </div>
                             <div class="progress-container">
@@ -1686,14 +1727,20 @@
                 }
 
                 // Update the UI with the data
-                // Update the UI with the data
                 document.getElementById('total-carbon-credits').textContent = totalCarbonCredits;
                 document.getElementById('total-dishes-sold').textContent = totalDishesSold;
-                document.getElementById('unique-customers').textContent = customerAddresses.size;
+
+                // Remove reference to non-existent element
+                // document.getElementById('unique-customers').textContent = customerAddresses.size;
 
                 // Calculate average
                 const avgCredits = totalDishesSold > 0 ? (totalCarbonCredits / totalDishesSold).toFixed(2) : 0;
-                document.getElementById('avg-carbon-credits').textContent = avgCredits;
+
+                // Make sure this element exists in the HTML or skip it
+                const avgCarbonCreditsElement = document.getElementById('avg-carbon-credits');
+                if (avgCarbonCreditsElement) {
+                    avgCarbonCreditsElement.textContent = avgCredits;
+                }
 
                 // Add a summary line to help with debugging
                 console.log(`Generated carbon report: Total Credits=${totalCarbonCredits}, Total Sold=${totalDishesSold}, Events=${purchaseEvents.length}`);
@@ -1852,7 +1899,7 @@
                 <div style="display: flex; flex-direction: column; align-items: center; margin: 0 15px; flex: 1;">
                     <div style="display: flex; flex-direction: column; justify-content: flex-end; height: 180px;">
                         <div style="height: ${height}%; width: 40px; background-color: ${color}; min-height: 20px; transition: height 0.5s ease;"></div>
-                    </div>
+                </div>
                     <div style="margin-top: 10px; font-size: 14px; max-width: 120px; text-align: center; height: 40px; overflow: hidden;">${dishName}</div>
                     <div style="font-weight: bold; margin-top: 5px;">${credits} credits</div>
                 </div>`;
@@ -2303,6 +2350,178 @@
         document.addEventListener('DOMContentLoaded', function () {
             readAddressFromURL();
         });
+
+        // Helper function to get all customers who purchased a specific dish
+        async function getCustomersForDish(dishId) {
+            // In a real implementation, you might query transaction logs or events
+            // For this solution, we'll use a placeholder approach
+            // One approach would be to get past events from the contract, but that's complex in this context
+
+            // For now, we'll rely on the data from the carbon report which has purchase info
+            const customers = new Set();
+
+            try {
+                // Check if we have purchase events data
+                if (purchaseEvents && purchaseEvents.length > 0) {
+                    for (const event of purchaseEvents) {
+                        if (event.dishId == dishId) {
+                            customers.add(event.customer);
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error("Error getting customers for dish:", error);
+            }
+
+            return Array.from(customers);
+        }
+
+        // Function to count actual sales from dish purchases
+        async function countActualSales() {
+            if (!greenDishContract || accounts.length === 0) return 0;
+
+            actualSalesCount = 0;
+            try {
+                const restaurantDishes = await greenDishContract.methods.getRestaurantDishes(accounts[0]).call();
+
+                // Check for transaction events to count actual sales
+                for (let i = 0; i < restaurantDishes.length; i++) {
+                    const dishId = restaurantDishes[i];
+                    // Get actual sales by checking blockchain records
+                    try {
+                        const customers = await getCustomersForDish(dishId);
+                        for (const customer of customers) {
+                            try {
+                                const purchaseCount = await greenDishContract.methods.dishesBought(dishId, customer).call();
+                                actualSalesCount += parseInt(purchaseCount);
+                            } catch (err) {
+                                console.log(`No purchase data for customer ${customer} and dish ${dishId}`);
+                            }
+                        }
+                    } catch (error) {
+                        console.error("Error getting actual sales count:", error);
+                    }
+                }
+
+                // Update the display
+                const actualSalesElement = document.getElementById('actual-sales');
+                if (actualSalesElement) {
+                    actualSalesElement.textContent = actualSalesCount;
+                }
+
+                return actualSalesCount;
+            } catch (error) {
+                console.error("Error counting actual sales:", error);
+                return 0;
+            }
+        }
+
+        // Modify the loadRestaurantData function to include actual sales counting
+        async function loadRestaurantData() {
+            if (!greenDishContract || !accounts.length) return;
+
+            try {
+                // Get dishes created by the restaurant owner
+                const ownerDishes = await greenDishContract.methods.getRestaurantDishes(accounts[0]).call();
+                console.log("Restaurant dishes:", ownerDishes);
+
+                // Load restaurant loyalty tier info
+                loadRestaurantTierInfo();
+
+                // Count actual sales if the element exists
+                if (document.getElementById('actual-sales')) {
+                    await countActualSales();
+                }
+
+                // Reset dishes array
+                deployedDishes = [];
+
+                // Load saved initial inventory data if available
+                let savedInitialInventory = {};
+                try {
+                    const savedData = localStorage.getItem(`initialInventory_${accounts[0].toLowerCase()}`);
+                    if (savedData) {
+                        savedInitialInventory = JSON.parse(savedData);
+                        console.log("Loaded saved initial inventory:", savedInitialInventory);
+                    }
+                } catch (e) {
+                    console.error("Error loading saved inventory data:", e);
+                }
+
+                // Load dish details
+                if (ownerDishes.length > 0) {
+                    let restaurantNameFromChain = null;
+
+                    for (const dishId of ownerDishes) {
+                        try {
+                            const dishInfo = await greenDishContract.methods.getDishInfo(dishId).call();
+                            console.log(`Dish ${dishId} info:`, dishInfo);
+
+                            // Store restaurant name from first dish if we don't have it yet
+                            if (!restaurantNameFromChain && dishInfo[0]) {
+                                restaurantNameFromChain = dishInfo[0];
+                            }
+
+                            const dish = {
+                                id: dishId,
+                                restaurantName: dishInfo[0],
+                                restaurantOwner: dishInfo[1],
+                                name: dishInfo[2],
+                                dishPrice: web3.utils.fromWei(dishInfo[3], 'ether'),
+                                availableInventory: dishInfo[4],
+                                carbonCredits: dishInfo[5],
+                                mainComponent: dishInfo[6],
+                                supplySource: dishInfo[7],
+                                isActive: dishInfo[8]
+                            };
+
+                            // If we have saved initial inventory, use it
+                            // Otherwise, use current inventory as the initial value
+                            if (savedInitialInventory[dishId]) {
+                                dish.totalSeats = savedInitialInventory[dishId];
+                            } else {
+                                // This is a new dish or we don't have saved data
+                                // Save the current inventory as the initial value
+                                dish.totalSeats = dish.availableInventory;
+                                savedInitialInventory[dishId] = dish.availableInventory;
+                            }
+
+                            deployedDishes.push(dish);
+                        } catch (error) {
+                            console.error(`Error loading dish ${dishId}:`, error);
+                        }
+                    }
+
+                    // Save the updated initial inventory values to localStorage
+                    try {
+                        localStorage.setItem(`initialInventory_${accounts[0].toLowerCase()}`, JSON.stringify(savedInitialInventory));
+                    } catch (e) {
+                        console.error("Error saving inventory data:", e);
+                    }
+
+                    // If we found a restaurant name on-chain but don't have one saved, save it
+                    if (restaurantNameFromChain) {
+                        const savedData = localStorage.getItem(`restaurantInfo_${accounts[0].toLowerCase()}`);
+                        if (!savedData) {
+                            saveRestaurantName(restaurantNameFromChain);
+                            showAlert(`Retrieved your restaurant name "${restaurantNameFromChain}" from your existing dishes`, "info");
+                        }
+                    }
+
+                    // Update UI
+                    renderDishList();
+                    updateDashboardStats();
+
+                    showAlert(`Loaded ${deployedDishes.length} dishes`, "success");
+                } else {
+                    dishList.innerHTML = "<p>No dishes created yet</p>";
+                    updateDashboardStats();
+                }
+            } catch (error) {
+                console.error("Error loading restaurant data:", error);
+                showAlert("Error loading restaurant data: " + error.message, "error");
+            }
+        }
     </script>
 </body>
 

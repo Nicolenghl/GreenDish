@@ -300,7 +300,7 @@
             display: flex;
             flex-wrap: wrap;
             justify-content: center;
-            gap: 30px;
+            gap: 20px;
             max-width: 1200px;
             margin: 0 auto;
             padding: 0 20px;
@@ -309,7 +309,7 @@
         .tier-card {
             background-color: #f9f9f9;
             border-radius: 8px;
-            padding: 40px 30px 70px;
+            padding: 25px 20px 25px;
             text-align: center;
             box-shadow: var(--card-shadow);
             transition: transform 0.3s, box-shadow 0.3s;
@@ -317,9 +317,12 @@
             min-width: 260px;
             max-width: 300px;
             border-top: 5px solid var(--primary);
+            position: relative;
+            height: 380px;
+            margin-bottom: 20px;
+            overflow: hidden;
             display: flex;
             flex-direction: column;
-            position: relative;
         }
 
         .tier-card:hover {
@@ -337,29 +340,37 @@
         .tier-multiplier {
             font-size: 36px;
             color: var(--dark);
-            margin-bottom: 20px;
+            margin-bottom: 15px;
         }
 
         .tier-features {
             list-style: none;
-            margin-bottom: 20px;
-            height: 150px;
-            overflow: visible;
+            margin-bottom: 15px;
+            text-align: left;
+            flex-grow: 1;
         }
 
         .tier-features li {
-            padding: 10px 0;
+            padding: 8px 5px;
             border-bottom: 1px solid #eee;
+            font-size: 15px;
+            word-wrap: break-word;
+            line-height: 1.5;
+            color: var(--dark);
         }
 
         .tier-features li:last-child {
             border-bottom: none;
         }
 
-        .btn-primary {
-            margin-top: auto;
-            position: relative;
-            z-index: 1;
+        .action-row {
+            margin-top: 30px;
+            text-align: center;
+        }
+
+        .action-row .btn {
+            padding: 12px 25px;
+            font-weight: bold;
         }
 
         /* CTA Section */
@@ -389,6 +400,20 @@
             justify-content: center;
             flex-wrap: wrap;
             gap: 15px;
+        }
+
+        /* High contrast CTA button */
+        .btn-cta-primary {
+            background-color: white;
+            color: var(--primary);
+            font-weight: bold;
+            border: 2px solid white;
+        }
+
+        .btn-cta-primary:hover {
+            background-color: var(--light);
+            color: var(--primary-dark);
+            border-color: var(--light);
         }
 
         /* Footer */
@@ -788,6 +813,11 @@
             border-radius: 6px;
             font-size: 16px;
         }
+
+        /* Restaurant Tiers Section */
+        .tiers.restaurant-tiers {
+            background-color: white;
+        }
     </style>
 </head>
 
@@ -1013,7 +1043,6 @@
                         <li>Marketplace access</li>
                         <li>Personal impact tracking</li>
                     </ul>
-                    <a href="customer-profile.html" class="btn btn-primary">View Profile</a>
                 </div>
                 <div class="tier-card">
                     <div class="tier-name">Silver</div>
@@ -1024,7 +1053,6 @@
                         <li>Special event access</li>
                         <li>Seasonal promotions</li>
                     </ul>
-                    <a href="customer-profile.html" class="btn btn-primary">View Profile</a>
                 </div>
                 <div class="tier-card">
                     <div class="tier-name">Gold</div>
@@ -1035,7 +1063,6 @@
                         <li>Priority reservations</li>
                         <li>Early access to new dishes</li>
                     </ul>
-                    <a href="customer-profile.html" class="btn btn-primary">View Profile</a>
                 </div>
                 <div class="tier-card">
                     <div class="tier-name">Platinum</div>
@@ -1046,13 +1073,17 @@
                         <li>Exclusive chef experiences</li>
                         <li>Voting rights on new features</li>
                     </ul>
-                    <a href="customer-profile.html" class="btn btn-primary">View Profile</a>
                 </div>
+            </div>
+
+            <!-- Single button row for all tiers -->
+            <div class="action-row">
+                <a href="customer-profile.html" class="btn btn-primary">View Your Profile</a>
             </div>
         </section>
 
         <!-- Restaurant Tiers Section -->
-        <section class="tiers" style="background-color: #f8f9fa;">
+        <section class="tiers restaurant-tiers" style="background-color: white;">
             <div class="section-title fade-in">
                 <h2>Restaurant Certification Levels</h2>
                 <p>Restaurants earn certification based on their sustainability achievements</p>
@@ -1067,7 +1098,6 @@
                         <li>Standard transaction fees</li>
                         <li>Basic analytics dashboard</li>
                     </ul>
-                    <a href="restaurant-portal.html" class="btn btn-primary">Restaurant Portal</a>
                 </div>
                 <div class="tier-card">
                     <div class="tier-name">GREEN PLUS</div>
@@ -1078,7 +1108,6 @@
                         <li>Featured marketplace placement</li>
                         <li>Enhanced analytics</li>
                     </ul>
-                    <a href="restaurant-portal.html" class="btn btn-primary">Restaurant Portal</a>
                 </div>
                 <div class="tier-card">
                     <div class="tier-name">GREEN ELITE</div>
@@ -1087,9 +1116,8 @@
                         <li><strong>5000-9999</strong> Carbon Credits</li>
                         <li>25% increased token earnings</li>
                         <li>Premium marketplace placement</li>
-                        <li>Advanced carbon tracking tools</li>
+                        <li>Enhanced analytics</li>
                     </ul>
-                    <a href="restaurant-portal.html" class="btn btn-primary">Restaurant Portal</a>
                 </div>
                 <div class="tier-card">
                     <div class="tier-name">GREEN MASTER</div>
@@ -1098,10 +1126,14 @@
                         <li><strong>10000+</strong> Carbon Credits</li>
                         <li>50% increased token earnings</li>
                         <li>Top marketplace placement</li>
-                        <li>White-glove platform support</li>
+                        <li>Advanced analytics dashboard</li>
                     </ul>
-                    <a href="restaurant-portal.html" class="btn btn-primary">Restaurant Portal</a>
                 </div>
+            </div>
+
+            <!-- Single button row for all restaurant tiers -->
+            <div class="action-row">
+                <a href="restaurant-portal.html" class="btn btn-primary">Restaurant Portal</a>
             </div>
         </section>
 
@@ -1109,10 +1141,10 @@
         <section class="cta">
             <div class="container">
                 <h2 class="fade-in">Ready to Make a Difference?</h2>
-                <p class="fade-in">Join thousands of environmentally conscious diners and restaurants on the GreenDish
+                <p class="fade-in">Come and Join thousands of environmentally conscious diners and restaurants on the GreenDish
                     platform.</p>
                 <div class="cta-buttons fade-in">
-                    <a href="marketplace.html" class="btn btn-large">Browse Dishes</a>
+                    <a href="marketplace.html" class="btn btn-cta-primary btn-large">Browse Dishes</a>
                     <a href="restaurant-portal.html" class="btn btn-secondary btn-large">Register Restaurant</a>
                 </div>
             </div>
@@ -1124,12 +1156,7 @@
                 <div class="footer-section">
                     <h3>GreenDish</h3>
                     <p>Building a sustainable future for the restaurant industry through blockchain technology.</p>
-                    <div class="social-icons">
-                        <a href="#"><span>🌐</span></a>
-                        <a href="#"><span>📱</span></a>
-                        <a href="#"><span>📘</span></a>
-                        <a href="#"><span>📸</span></a>
-                    </div>
+
                 </div>
                 <div class="footer-section">
                     <h3>Quick Links</h3>
@@ -1141,25 +1168,16 @@
                     </ul>
                 </div>
                 <div class="footer-section">
-                    <h3>Resources</h3>
-                    <ul class="footer-links">
-                        <li><a href="#">Documentation</a></li>
-                        <li><a href="#">How It Works</a></li>
-                        <li><a href="#">Carbon Credit System</a></li>
-                        <li><a href="#">Smart Contract Audit</a></li>
-                    </ul>
-                </div>
-                <div class="footer-section">
                     <h3>Contact</h3>
                     <ul class="footer-links">
                         <li>Email: info@greendish.io</li>
                         <li>Support: support@greendish.io</li>
-                        <li>Partnerships: partners@greendish.io</li>
+                        <li>Partnerships: To be announced</li>
                     </ul>
                 </div>
             </div>
             <div class="footer-bottom">
-                <p>&copy; 2023 GreenDish. All rights reserved.</p>
+                <p>&copy; ISOM3270 GreenDish. All rights reserved.</p>
             </div>
         </footer>
     </div>
