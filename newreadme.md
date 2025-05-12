@@ -88,6 +88,36 @@ npx http-server ./public -p 3000
 └── README.md               # This file
 ```
 
+## 📑 Contract Details
+
+### GreenDish.sol
+The core platform contract implements the following key features:
+
+- **Dish Creation & Management**:
+  - Create dishes with name, restaurant info, price, inventory, and carbon credits
+  - Carbon credit constraints (0-100) to quantify sustainability impact
+  - Inventory tracking and management with dish status controls (active/inactive)
+  - Self-dealing prevention (restaurant owners can't purchase their own dishes)
+
+- **Purchase Functionality**:
+  - Secure dish purchase system with inventory tracking
+  - Transaction processing with real-time availability verification
+  - Excess payment handling and refund mechanism
+
+- **Sustainability System**:
+  - Carbon credit tracking for both restaurants and customers
+  - Multi-tier loyalty system for both customers (Bronze to Platinum) and restaurants (Green Basic to Green Master)
+  - Tier-based reward multipliers for enhanced incentives
+
+### GreenCoin.sol
+The ERC-20 token contract powering the reward system:
+
+- Standard ERC-20 implementation with added burn functionality
+- Fixed maximum supply of 1 million tokens (1,000,000 GRC)
+- 30% allocation to ecosystem reward pool
+- Token award mechanism for sustainable choices
+- Reward distribution between customers (80%) and restaurants (20%)
+
 ## 🖥️ Application Pages
 
 ### Restaurant Portal
