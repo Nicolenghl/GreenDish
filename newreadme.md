@@ -91,6 +91,7 @@ npx http-server ./public -p 3000
 ## 📑 Contract Details
 
 ### GreenDish.sol
+
 The core platform contract implements the following key features:
 
 - **Dish Creation & Management**:
@@ -110,6 +111,7 @@ The core platform contract implements the following key features:
   - Tier-based reward multipliers for enhanced incentives
 
 ### GreenCoin.sol
+
 The ERC-20 token contract powering the reward system:
 
 - Standard ERC-20 implementation with added burn functionality
